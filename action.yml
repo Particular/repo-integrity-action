@@ -1,0 +1,9 @@
+name: 'Particular Software repo integrity checks'
+description: 'Tests repos for standards enforcement in multiple ways'
+runs:
+  using: "composite"
+  steps:
+    - name: Run tests
+      shell: pwsh
+      run: dotnet test ${{ github.action_path }}/src/RepoIntegrityTests --configuration Release --logger "GitHubActions;report-warnings=$reportWarnings" -- RunConfiguration.TreatNoTestsAsError=true
+
