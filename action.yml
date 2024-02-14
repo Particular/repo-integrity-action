@@ -5,5 +5,5 @@ runs:
   steps:
     - name: Run tests
       shell: pwsh
-      run: dotnet test ${{ github.action_path }}/src/RepoIntegrityTests --configuration Release --logger "GitHubActions;report-warnings=$reportWarnings" -- RunConfiguration.TreatNoTestsAsError=true
+      run: dotnet test ${{ github.action_path }}/src/RepoIntegrityTests --configuration Release --logger "GitHubActions;report-warnings=false" -- RunConfiguration.TreatNoTestsAsError=true
 
