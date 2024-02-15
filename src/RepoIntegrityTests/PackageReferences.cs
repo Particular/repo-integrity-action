@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Xml.XPath;
-using NuGet.Versioning;
-using NUnit.Framework;
-
-namespace RepoIntegrityTests
+﻿namespace RepoIntegrityTests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text.RegularExpressions;
+    using System.Xml.XPath;
+    using NuGet.Versioning;
+    using NUnit.Framework;
+
     public partial class PackageReferences
     {
         [Test]

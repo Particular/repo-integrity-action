@@ -1,13 +1,13 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-using YamlDotNet.Serialization;
-
-namespace RepoIntegrityTests.Infrastructure
+﻿namespace RepoIntegrityTests.Infrastructure
 {
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text.Json;
+    using System.Text.Json.Nodes;
+    using System.Text.Json.Serialization;
+    using YamlDotNet.Serialization;
+
     public class ActionsWorkflow
     {
         JsonNode root;

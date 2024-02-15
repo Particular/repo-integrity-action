@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Xml.Linq;
-
-namespace RepoIntegrityTests
+﻿namespace RepoIntegrityTests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Xml.Linq;
+
     public class FileContext(string filePath)
     {
         public string FilePath { get; } = filePath;
         public string DirectoryPath { get; } = Path.GetDirectoryName(filePath);
         public bool IsFailed { get; private set; }
 
-        public List<string> FailReasons { get; } = new();
+        public List<string> FailReasons { get; } = [];
 
         public void Fail(string reason = null)
         {
@@ -23,7 +23,7 @@ namespace RepoIntegrityTests
             }
         }
 
-        private Lazy<XDocument> xdoc = new Lazy<XDocument>(() => XDocument.Load(filePath), false);
+        Lazy<XDocument> xdoc = new Lazy<XDocument>(() => XDocument.Load(filePath), false);
         public XDocument XDocument => xdoc.Value;
 
         public override string ToString()

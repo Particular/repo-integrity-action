@@ -1,7 +1,7 @@
-﻿using System.Xml.Linq;
-
-namespace RepoIntegrityTests.Infrastructure
+﻿namespace RepoIntegrityTests.Infrastructure
 {
+    using System.Xml.Linq;
+
     public static class XDocumentExtensions
     {
         public static bool? GetBoolean(this XElement element)

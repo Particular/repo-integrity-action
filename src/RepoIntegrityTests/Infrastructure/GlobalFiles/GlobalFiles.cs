@@ -1,7 +1,7 @@
-﻿using System;
-
-namespace RepoIntegrityTests
+﻿namespace RepoIntegrityTests
 {
+    using System;
+
     public static class GlobalFiles
     {
         static readonly Lazy<CustomBuildProps> customBuildProps = new(new CustomBuildProps());

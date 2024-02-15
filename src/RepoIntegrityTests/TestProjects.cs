@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml.XPath;
-using NUnit.Framework;
-using RepoIntegrityTests.Infrastructure;
-
-namespace RepoIntegrityTests
+﻿namespace RepoIntegrityTests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using System.Text.RegularExpressions;
+    using System.Xml.XPath;
+    using NUnit.Framework;
+    using RepoIntegrityTests.Infrastructure;
+
     public partial class TestProjects
     {
         [Test]
@@ -100,7 +100,7 @@ namespace RepoIntegrityTests
                 return $"net{dotnetMajor}.0";
             }
 
-            throw new System.Exception($"Unable to map dotnet-version value (i.e. '8.0.x') to target framework (i.e. 'net8.0'. A mapping for the value '{dotnetVersion}' may be missing, or it may be incorrect.");
+            throw new Exception($"Unable to map dotnet-version value (i.e. '8.0.x') to target framework (i.e. 'net8.0'. A mapping for the value '{dotnetVersion}' may be missing, or it may be incorrect.");
         }
 
         [GeneratedRegex(@"(\d+)\.0\.x")]

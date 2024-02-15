@@ -1,10 +1,10 @@
-﻿using System.IO;
-using System.Xml.Linq;
-using System.Xml.XPath;
-using RepoIntegrityTests.Infrastructure;
-
-namespace RepoIntegrityTests
+﻿namespace RepoIntegrityTests
 {
+    using System.IO;
+    using System.Xml.Linq;
+    using System.Xml.XPath;
+    using RepoIntegrityTests.Infrastructure;
+
     public class CustomBuildProps
     {
         public XDocument Document { get; }

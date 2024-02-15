@@ -1,9 +1,9 @@
-﻿using System.Linq;
-using System.Xml.XPath;
-using RepoIntegrityTests.Infrastructure;
-
-namespace RepoIntegrityTests
+﻿namespace RepoIntegrityTests
 {
+    using System.Linq;
+    using System.Xml.XPath;
+    using RepoIntegrityTests.Infrastructure;
+
     public static class FileContextExtensions
     {
         public static bool IsSdkProject(this FileContext file) =>
