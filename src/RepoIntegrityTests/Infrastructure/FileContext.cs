@@ -8,8 +8,10 @@
 
     public class FileContext(string filePath)
     {
-        public string FilePath { get; } = filePath;
+        public string FullPath { get; } = filePath;
         public string DirectoryPath { get; } = Path.GetDirectoryName(filePath);
+        public string FileName { get; } = Path.GetFileName(filePath);
+        public string RelativePath { get; } = filePath.Substring(TestSetup.RootDirectory.Length + 1).Replace("\\", "/");
         public bool IsFailed { get; private set; }
 
         public List<string> FailReasons { get; } = [];

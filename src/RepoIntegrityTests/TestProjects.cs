@@ -47,7 +47,7 @@
                     var frameworksText = file.XDocument.XPathSelectElement("/Project/PropertyGroup/TargetFramework")?.Value
                         ?? file.XDocument.XPathSelectElement("/Project/PropertyGroup/TargetFrameworks")?.Value;
 
-                    collectedTestFrameworks.Add((file.FilePath, frameworksText));
+                    collectedTestFrameworks.Add((file.FullPath, frameworksText));
 
                     var frameworks = frameworksText.Split(';');
 

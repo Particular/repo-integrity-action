@@ -13,14 +13,14 @@
         readonly string name;
         IEnumerable<FileContext> files;
 
-        public TestRunner(string glob, string name)
+        public TestRunner(string glob, string name, bool failIfNoMatches = true)
         {
             this.name = name;
             var filesArray = Directory.GetFiles(TestSetup.RootDirectory, glob, SearchOption.AllDirectories)
                 .Select(filePath => new FileContext(filePath))
                 .ToArray();
 
-            if (filesArray.Length == 0)
+            if (failIfNoMatches && filesArray.Length == 0)
             {
                 Assert.Fail($"No files found matching '{glob}'.");
             }
@@ -36,7 +36,7 @@
                 pattern = pattern.Replace("\\\\", "/");
             }
 
-            files = files.Where(f => !Regex.IsMatch(f.FilePath, pattern, regexOptions));
+            files = files.Where(f => !Regex.IsMatch(f.FullPath, pattern, regexOptions));
 
             return this;
         }
@@ -71,13 +71,12 @@
                 .Where(f => f.IsFailed)
                 .SelectMany(f =>
                 {
-                    var relativePath = f.FilePath.Substring(TestSetup.RootDirectory.Length + 1);
                     if (!f.FailReasons.Any())
                     {
-                        return [relativePath];
+                        return [f.RelativePath];
                     }
 
-                    return f.FailReasons.Select(reason => $"{relativePath} - {reason}");
+                    return f.FailReasons.Select(reason => $"{f.RelativePath} - {reason}");
                 })
                 .ToArray();
 

@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
     using System.Xml.XPath;
@@ -70,12 +71,13 @@
 
                     foreach (var pkgRef in packageReferenceElements)
                     {
+                        var name = pkgRef.Attribute("Include").Value;
                         var versionStr = pkgRef.Attribute("Version")?.Value;
                         if (versionStr is not null)
                         {
                             if (!NuGetVersion.TryParse(versionStr, out var version))
                             {
-                                f.Fail();
+                                f.Fail($"PackageReference '{name}' is using version '{versionStr}' which should be an explicit version");
                             }
                         }
                     }
@@ -85,7 +87,7 @@
         [Test]
         public void NoPrereleasePackagesOnRelease()
         {
-            var githubRef = Environment.GetEnvironmentVariable("GITHUB_REF") ?? "refs/tags/1.1.10";
+            var githubRef = Environment.GetEnvironmentVariable("GITHUB_REF");
 
             var isRtmRelease = !string.IsNullOrEmpty(githubRef) && NonPrereleaseGithubRefRegex().IsMatch(githubRef);
 
@@ -128,7 +130,11 @@
                         {
                             if (!isRange || !range.HasLowerAndUpperBounds)
                             {
-                                f.Fail($"Dependency '{name}' should be defined as a version range so that users can't accidentally update to a version with breaking changes.");
+                                bool isSingleVersionPrerelease = isSingleVersion && version.IsPrerelease;
+                                if (!isSingleVersionPrerelease)
+                                {
+                                    f.Fail($"Dependency '{name}' should be defined as a version range so that users can't accidentally update to a version with breaking changes.");
+                                }
                             }
                         }
 
@@ -142,6 +148,79 @@
                                 f.Fail($"Dependency '{name}' cannot use a prerelease package on an RTM release.");
                             }
                         }
+                    }
+                });
+        }
+
+        [Test]
+        public void DependenciesDefinedAsRangesMustBeSpecifiedInTests()
+        {
+            List<(string projectFileName, string rangedDependency)> publicDeps = [];
+
+            new TestRunner("*.csproj", "Find public dependencies that are version-ranged")
+                .ProjectsProducingNuGetPackages()
+                .Run(f =>
+                {
+                    var packageReferenceElements = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
+
+                    foreach (var pkgRef in packageReferenceElements)
+                    {
+                        var name = pkgRef.Attribute("Include").Value;
+                        var versionStr = pkgRef.Attribute("Version")?.Value;
+
+                        if (VersionRange.TryParse(versionStr, out var range) && range.HasLowerAndUpperBounds)
+                        {
+                            var projectFileName = Path.GetFileName(f.FullPath);
+                            publicDeps.Add((projectFileName, name));
+                        }
+                    }
+                });
+
+            var lookup = publicDeps.ToLookup(dep => dep.projectFileName, dep => dep.rangedDependency);
+
+            new TestRunner("*.csproj", "Ensure component dependency ranges have absolute version in test projects")
+                .TestProjects()
+                .Run(f =>
+                {
+                    if (f.ProducesNuGetPackage())
+                    {
+                        return;
+                    }
+
+                    var projectRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/ProjectReference");
+
+                    foreach (var projRef in projectRefs)
+                    {
+                        var relativePath = projRef.Attribute("Include").Value;
+                        var parts = relativePath.Split('\\');
+                        var projectFileName = parts.Last();
+
+                        var rangedDeps = lookup[projectFileName] ?? [];
+
+                        foreach (var depName in rangedDeps)
+                        {
+                            var findPackageRef = f.XDocument.XPathSelectElement($"/Project/ItemGroup/PackageReference[@Include='{depName}']");
+                            if (findPackageRef is null || !NuGetVersion.TryParse(findPackageRef.Attribute("Version")?.Value, out _))
+                            {
+                                f.Fail($"Test project '{f.FileName}' has a project reference to '{projectFileName}' but does not specify an explicit version for the ranged dependency '{depName}'.");
+                            }
+                        }
+                    }
+                });
+        }
+
+        public void DontExplicitlyReferenceParticularAnalyzers()
+        {
+            new TestRunner("*.csproj", "Projects should not explicitly reference Particular.Analyzers since it's referenced by Directory.Build.props")
+                .SdkProjects()
+                .Run(f =>
+                {
+                    var analyzers = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference[@Include='Particular.Analyzers']");
+                    var coderules = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference[@Include='Particular.Analyzers']");
+
+                    if (analyzers.Any() || coderules.Any())
+                    {
+                        f.Fail();
                     }
                 });
         }
