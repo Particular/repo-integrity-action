@@ -10,6 +10,7 @@
     using NUnit.Framework;
     using RepoIntegrityTests.Infrastructure;
 
+    [DotNetProjects]
     public partial class TestProjects
     {
         [Test]
@@ -47,9 +48,11 @@
                     var frameworksText = file.XDocument.XPathSelectElement("/Project/PropertyGroup/TargetFramework")?.Value
                         ?? file.XDocument.XPathSelectElement("/Project/PropertyGroup/TargetFrameworks")?.Value;
 
-                    collectedTestFrameworks.Add((file.FullPath, frameworksText));
+                    var frameworks = frameworksText.Split(';')
+                        .Select(tfm => tfm.Contains('-') ? tfm.Split('-')[0] : tfm)
+                        .ToArray();
 
-                    var frameworks = frameworksText.Split(';');
+                    collectedTestFrameworks.Add((file.FullPath, string.Join(';', frameworks)));
 
                     if (!frameworks.All(tfm => tfm.StartsWith("net4") || expectedFrameworks.Contains(tfm)))
                     {
@@ -90,7 +93,6 @@
             if (result != null)
             {
                 return result;
-
             }
 
             var match = DotNetVersionRegex().Match(dotnetVersion);

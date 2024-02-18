@@ -8,7 +8,9 @@
     using System.Xml.XPath;
     using NuGet.Versioning;
     using NUnit.Framework;
+    using RepoIntegrityTests.Infrastructure;
 
+    [DotNetProjects]
     public partial class PackageReferences
     {
         [Test]
