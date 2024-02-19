@@ -211,6 +211,54 @@
                 });
         }
 
+        [Test]
+        public void KnownPackagesArePrivateAssetsAll()
+        {
+            new TestRunner("*.csproj", "Package references for known build tools should be marked with PrivateAssets=\"All\"")
+                .Run(f =>
+                {
+                    var packageRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
+                    var sourcePackage = f.XDocument.XPathSelectElement("/Project/PropertyGroup/IncludeSourceFilesInPackage").GetBoolean() ?? false;
+
+                    foreach (var pkgRef in packageRefs)
+                    {
+                        if (pkgRef.Attribute("PrivateAssets")?.Value == "All")
+                        {
+                            continue;
+                        }
+
+                        var packageName = pkgRef.Attribute("Include").Value;
+
+                        if (KnownBuildToolPackages.Contains(packageName))
+                        {
+                            f.Fail($"PackageReference '{packageName}' must be marked PrivateAssets=\"All\"");
+                        }
+                        else if (sourcePackage && AlsoPrivateAssetsInSourcePackages.Contains(packageName))
+                        {
+                            f.Fail($"Because this is a source package, PackageReference '{packageName}' also must be marked PrivateAssets=\"All\"");
+                        }
+                    }
+                });
+        }
+
+        static readonly HashSet<string> KnownBuildToolPackages = new([
+            "Particular.Packaging",
+            "Particular.CodeRules",
+            "Particular.Analyzers",
+            "Fody",
+            "Obsolete.Fody",
+            "Janitor.Fody",
+            "ILRepack",
+            "NServiceBus.Transport.Msmq.Sources"
+        ], StringComparer.OrdinalIgnoreCase);
+
+        static readonly HashSet<string> AlsoPrivateAssetsInSourcePackages = new([
+            "GitHubActionsTestLogger",
+            "Microsoft.NET.Test.Sdk",
+            "NUnit3TestAdapter",
+            "Particular.Approvals"
+        ], StringComparer.OrdinalIgnoreCase);
+
         public void DontExplicitlyReferenceParticularAnalyzers()
         {
             new TestRunner("*.csproj", "Projects should not explicitly reference Particular.Analyzers since it's referenced by Directory.Build.props")
