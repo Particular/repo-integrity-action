@@ -71,16 +71,25 @@
                 {
                     var keyFile = f.XDocument.XPathSelectElement("/Project/PropertyGroup/AssemblyOriginatorKeyFile")?.Value;
 
+                    if (keyFile is null)
+                    {
+                        return;
+                    }
+
                     if (f.ProducesNuGetPackage())
                     {
                         var isSourcePackage = f.XDocument.XPathSelectElement("/Project/PropertyGroup/IncludeSourceFilesInPackage").GetBoolean() ?? false;
 
                         if (isSourcePackage)
                         {
-                            if (keyFile is not null)
-                            {
-                                f.Fail("Source packages should not be signed. Remove the AssemblyOriginatorKeyFile element.");
-                            }
+                            // Missing concept: Source packages should generally not be signed, but for example in Core, PersistenceTests does need
+                            // to be signed because it does (for some reason) need access to NServiceBus.Core internals. Checking that would involve
+                            // also checking for InternalsVisibleTo in other projects which seems too complex for this test for now
+
+                            //if (keyFile is not null)
+                            //{
+                            //    f.Fail("Source packages should not be signed. Remove the AssemblyOriginatorKeyFile element.");
+                            //}
                         }
                         else if (keyFile is not "$(SolutionDir)NServiceBus.snk" and not @"..\NServiceBus.snk")
                         {
