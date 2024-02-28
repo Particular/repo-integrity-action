@@ -259,6 +259,7 @@
             "Particular.Approvals"
         ], StringComparer.OrdinalIgnoreCase);
 
+        [Test]
         public void DontExplicitlyReferenceParticularAnalyzers()
         {
             new TestRunner("*.csproj", "Projects should not explicitly reference Particular.Analyzers since it's referenced by Directory.Build.props")
