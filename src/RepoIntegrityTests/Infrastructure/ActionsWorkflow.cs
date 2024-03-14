@@ -31,6 +31,11 @@
             Permissions = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(root["permissions"]);
             Env = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(root["env"]);
 
+            if (root["defaults"] is not null)
+            {
+                Defaults = JsonSerializer.Deserialize<IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>>>(root["defaults"]);
+            }
+
             Jobs = root["jobs"].AsObject().Select(pair =>
             {
                 var job = JsonSerializer.Deserialize<WorkflowJob>(pair.Value, options);
@@ -45,6 +50,8 @@
         public WorkflowTrigger[] On { get; }
         public IReadOnlyDictionary<string, string> Permissions { get; } = new Dictionary<string, string>();
         public IReadOnlyDictionary<string, string> Env { get; } = new Dictionary<string, string>();
+
+        public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Defaults { get; } = new Dictionary<string, IReadOnlyDictionary<string, string>>();
 
         public WorkflowJob[] Jobs { get; }
 
@@ -72,7 +79,20 @@
                     var trigger = new WorkflowTrigger(pair.Key);
                     if (pair.Value is not null)
                     {
-                        trigger.Filters = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string[]>>(pair.Value);
+                        if (trigger.EventId == "schedule")
+                        {
+                            trigger.Filters = new Dictionary<string, string[]>()
+                            {
+                                ["cron"] = (pair.Value as JsonArray)
+                                    .OfType<JsonObject>()
+                                    .Select(o => o["cron"].GetValue<string>())
+                                    .ToArray()
+                            };
+                        }
+                        else
+                        {
+                            trigger.Filters = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string[]>>(pair.Value);
+                        }
                     }
                     return trigger;
                 })
@@ -111,5 +131,11 @@
         public string Run { get; set; }
         public string Uses { get; set; }
         public IReadOnlyDictionary<string, string> With { get; set; }
+    }
+
+    public class DefaultDefinition
+    {
+        public string DefaultsFor { get; set; }
+        public IReadOnlyDictionary<string, string> Settings { get; set; }
     }
 }
