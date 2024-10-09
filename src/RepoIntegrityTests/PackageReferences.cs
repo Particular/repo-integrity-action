@@ -260,6 +260,31 @@
         ], StringComparer.OrdinalIgnoreCase);
 
         [Test]
+        public void DontUseMockingFrameworks()
+        {
+            new TestRunner("*.csproj", "Projects should not reference mocking frameworks")
+                .Run(f =>
+                {
+                    var packageRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
+
+                    foreach (var pkgRef in packageRefs)
+                    {
+                        var packageName = pkgRef.Attribute("Include").Value;
+
+                        if (KnownMockingFrameworks.Contains(packageName))
+                        {
+                            f.Fail($"Replace usage of {packageName} with a simple hand-rolled fake");
+                        }
+                    }
+                });
+        }
+        static readonly HashSet<string> KnownMockingFrameworks = new([
+            "FakeItEasy",
+            "Moq",
+            "NSubstitute"
+        ], StringComparer.OrdinalIgnoreCase);
+
+        [Test]
         public void DontExplicitlyReferenceParticularAnalyzers()
         {
             new TestRunner("*.csproj", "Projects should not explicitly reference Particular.Analyzers since it's referenced by Directory.Build.props")
