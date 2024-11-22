@@ -199,6 +199,7 @@
         public void KnownPackagesArePrivateAssetsAll()
         {
             new TestRunner("*.csproj", "Package references for known build tools should be marked with PrivateAssets=\"All\"")
+                .ProjectsProducingNuGetPackages()
                 .Run(f =>
                 {
                     var packageRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");

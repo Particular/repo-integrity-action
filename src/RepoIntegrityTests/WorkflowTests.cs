@@ -7,9 +7,9 @@
     public class WorkflowTests
     {
         [Test]
-        public void ShouldHavePwshDefault()
+        public void ShouldDefineDefaultShell()
         {
-            new TestRunner("*.yml", "Workflows should set the default shell to pwsh to ensure same functionality on all platforms, unless there are no run steps")
+            new TestRunner("*.yml", "Workflows should set the default shell to 'pwsh' or 'bash' ensure same functionality on all platforms, unless there are no run steps")
                 .Run(f =>
                 {
                     if (!f.RelativePath.StartsWith(".github/workflows"))
@@ -19,13 +19,25 @@
 
                     var workflow = new ActionsWorkflow(f.FullPath);
 
-                    var defaultShellSet = workflow.Defaults.TryGetValue("run", out var run) && run.TryGetValue("shell", out var shell) && shell == "pwsh";
+                    var workflowDefaultShell = workflow.Defaults.TryGetValue("run", out var run) && run.TryGetValue("shell", out var shell) ? shell : null;
 
-                    if (!defaultShellSet)
+                    if (workflowDefaultShell is "pwsh" or "bash")
                     {
-                        if (workflow.Jobs.SelectMany(job => job.Steps).Any(step => step.Run is not null))
+                        return;
+                    }
+
+                    foreach (var job in workflow.Jobs)
+                    {
+                        var jobDefaultShell = job.Defaults.TryGetValue("run", out var jobRun) && jobRun.TryGetValue("shell", out var jobShell) ? jobShell : null;
+
+                        if (jobDefaultShell is "pwsh" or "bash")
                         {
-                            f.Fail();
+                            continue;
+                        }
+
+                        if (job.Steps.Any(step => step.Run is not null))
+                        {
+                            f.Fail($"Job '{job.Id}' does not have a default shell defined at the workflow or job level.");
                         }
                     }
                 });
