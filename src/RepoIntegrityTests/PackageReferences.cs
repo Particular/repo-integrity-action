@@ -6,6 +6,7 @@
     using System.Linq;
     using System.Text.RegularExpressions;
     using System.Xml.XPath;
+    using NuGet.Protocol;
     using NuGet.Versioning;
     using NUnit.Framework;
     using RepoIntegrityTests.Infrastructure;
@@ -283,6 +284,40 @@
                     }
                 });
         }
+
+        [Test]
+        public async Task ShouldNotReferenceDeprecatedPackages()
+        {
+            await new TestRunner("*.csproj", "Projects should not reference deprecated NuGet packages")
+                .SdkProjects()
+                .RunAsync(async f =>
+                {
+                    var packageNames = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference")
+                        .Select(p => p.Attribute("Include")?.Value)
+                        .Where(name => name != null)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToArray();
+
+                    foreach (var packageName in packageNames)
+                    {
+                        var package = await NuGetData.GetPackageInfo(packageName);
+                        if (package is null)
+                        {
+                            continue; // Internal packages not on NuGet
+                        }
+
+                        // Implementation returns this synchronously, no need for additional caching
+                        var deprecationData = await package.GetDeprecationMetadataAsync();
+                        if (deprecationData is not null)
+                        {
+                            var reasons = string.Join(", ", deprecationData.Reasons);
+                            f.Fail($"Package '{packageName}' has been deprecated for reasons ({reasons}) and is no longer maintained.");
+                        }
+                    }
+                });
+        }
+
+
 
         static bool PackageShouldNotGenerateVersionRange(string name, out string trustedPrefix)
         {

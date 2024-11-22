@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
@@ -67,8 +68,19 @@
 
         public void Run(Action<FileContext> testAction)
         {
-            var results = files.ForEach(testAction)
-                .Where(f => f.IsFailed)
+            _ = files.ForEach(testAction);
+            ProcessResults();
+        }
+
+        public async Task RunAsync(Func<FileContext, Task> testAction)
+        {
+            await Task.WhenAll(files.Select(testAction));
+            ProcessResults();
+        }
+
+        void ProcessResults()
+        {
+            var results = files.Where(f => f.IsFailed)
                 .SelectMany(f =>
                 {
                     if (!f.FailReasons.Any())
