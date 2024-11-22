@@ -25,7 +25,7 @@
                 PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
             };
 
-            Name = root["name"].GetValue<string>();
+            Name = root["name"]?.GetValue<string>();
             RunName = root["run-name"]?.GetValue<string>();
             On = ParseTriggerEvents(root["on"]);
             Permissions = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(root["permissions"]);
@@ -40,6 +40,12 @@
             {
                 var job = JsonSerializer.Deserialize<WorkflowJob>(pair.Value, options);
                 job.Id = pair.Key;
+
+                if (pair.Value["defaults"] is not null)
+                {
+                    job.Defaults = JsonSerializer.Deserialize<IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>>>(pair.Value["defaults"]);
+                }
+
                 return job;
             })
             .ToArray();
@@ -89,6 +95,10 @@
                                     .ToArray()
                             };
                         }
+                        else if (trigger.EventId == "workflow_dispatch")
+                        {
+                            // What to do about inputs inputs, like in https://github.com/Particular/ServiceControl/blob/master/.github/workflows/push-container-images.yml
+                        }
                         else
                         {
                             trigger.Filters = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string[]>>(pair.Value);
@@ -114,11 +124,13 @@
     public class WorkflowJob
     {
         public string Id { get; set; }
+        public string Uses { get; set; }
         public string Name { get; set; }
         [JsonPropertyName("runs-on")]
         public string RunsOn { get; set; }
+        public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Defaults { get; set; } = new Dictionary<string, IReadOnlyDictionary<string, string>>();
         public JsonObject Strategy { get; set; }
-        public JobStep[] Steps { get; set; }
+        public JobStep[] Steps { get; set; } = [];
     }
 
     public class JobStep

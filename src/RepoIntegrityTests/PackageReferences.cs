@@ -6,6 +6,7 @@
     using System.Linq;
     using System.Text.RegularExpressions;
     using System.Xml.XPath;
+    using NuGet.Protocol;
     using NuGet.Versioning;
     using NUnit.Framework;
     using RepoIntegrityTests.Infrastructure;
@@ -103,7 +104,7 @@
                     {
                         var name = pkgRef.Attribute("Include").Value;
                         var versionStr = pkgRef.Attribute("Version")?.Value;
-                        var privateAssets = pkgRef.Attribute("PrivateAssets")?.Value is not null;
+                        var disableAutoVersionRange = string.Equals(pkgRef.Attribute("AutomaticVersionRange")?.Value, "false", StringComparison.OrdinalIgnoreCase);
 
                         if (versionStr is null)
                         {
@@ -112,40 +113,21 @@
                         }
 
                         var isSingleVersion = NuGetVersion.TryParse(versionStr, out var version);
-                        var isRange = VersionRange.TryParse(versionStr, out var range);
-
-                        if (privateAssets)
+                        if (!isSingleVersion)
                         {
-                            if (!isSingleVersion)
-                            {
-                                f.Fail($"Dependency '{name}' with PrivateAssets should use a single version so that Dependabot can update it.");
-                            }
-                        }
-                        else if (PackageDoesNotRequireVersionRanges(name, out var trustedPrefix))
-                        {
-                            if (!isSingleVersion)
-                            {
-                                f.Fail($"Dependency '{name}' should use a single version because the prefix '{trustedPrefix}' is trusted to not introduce breaking changes.");
-                            }
-                        }
-                        else
-                        {
-                            if (!isRange || !range.HasLowerAndUpperBounds)
-                            {
-                                bool isSingleVersionPrerelease = isSingleVersion && version.IsPrerelease;
-                                if (!isSingleVersionPrerelease)
-                                {
-                                    f.Fail($"Dependency '{name}' should be defined as a version range so that users can't accidentally update to a version with breaking changes.");
-                                }
-                            }
+                            f.Fail($"Dependency '{name}' should use a single version number because tooling is now used to generate version ranges at compile time.");
+                            continue;
                         }
 
-                        // Only on a release workflow for an RTM release
-                        if (isRtmRelease)
+                        if (PackageShouldNotGenerateVersionRange(name, out var trustedPrefix) && !disableAutoVersionRange)
                         {
-                            var minVersionPrerelease = range.MinVersion?.IsPrerelease ?? false;
-                            var maxVersionPrerelease = range.MaxVersion?.IsPrerelease ?? false;
-                            if (minVersionPrerelease || maxVersionPrerelease)
+                            f.Fail($"Dependency '{name}' should include AutomaticVersionRange=\"false\" because the prefix '{trustedPrefix}' is trusted to not introduce breaking changes.");
+                        }
+
+                        // Eventually, when these tests are run in release workflows, remove `|| true` to only break when attempting a release
+                        if (isRtmRelease || true)
+                        {
+                            if (version.IsPrerelease)
                             {
                                 f.Fail($"Dependency '{name}' cannot use a prerelease package on an RTM release.");
                             }
@@ -155,11 +137,11 @@
         }
 
         [Test]
-        public void DependenciesDefinedAsRangesMustBeSpecifiedInTests()
+        public void ComponentDependenciesShouldNotBeDuplicatedInTests()
         {
             List<(string projectFileName, string rangedDependency)> publicDeps = [];
 
-            new TestRunner("*.csproj", "Find public dependencies that are version-ranged")
+            new TestRunner("*.csproj", "Find public dependencies")
                 .ProjectsProducingNuGetPackages()
                 .Run(f =>
                 {
@@ -169,8 +151,10 @@
                     {
                         var name = pkgRef.Attribute("Include").Value;
                         var versionStr = pkgRef.Attribute("Version")?.Value;
+                        var isSingleVersion = NuGetVersion.TryParse(versionStr, out var version);
+                        var privateAssets = pkgRef.Attribute("PrivateAssets")?.Value is not null;
 
-                        if (VersionRange.TryParse(versionStr, out var range) && range.HasLowerAndUpperBounds)
+                        if (isSingleVersion && !privateAssets)
                         {
                             var projectFileName = Path.GetFileName(f.FullPath);
                             publicDeps.Add((projectFileName, name));
@@ -197,14 +181,14 @@
                         var parts = relativePath.Split('\\');
                         var projectFileName = parts.Last();
 
-                        var rangedDeps = lookup[projectFileName] ?? [];
+                        var publicDeps = lookup[projectFileName] ?? [];
 
-                        foreach (var depName in rangedDeps)
+                        foreach (var depName in publicDeps)
                         {
                             var findPackageRef = f.XDocument.XPathSelectElement($"/Project/ItemGroup/PackageReference[@Include='{depName}']");
-                            if (findPackageRef is null || !NuGetVersion.TryParse(findPackageRef.Attribute("Version")?.Value, out _))
+                            if (findPackageRef is not null)
                             {
-                                f.Fail($"Test project '{f.FileName}' has a project reference to '{projectFileName}' but does not specify an explicit version for the ranged dependency '{depName}'.");
+                                f.Fail($"Test project '{f.FileName}' has a project reference to '{projectFileName}' and should not repeat the PackageReference for '{depName}'.");
                             }
                         }
                     }
@@ -215,6 +199,7 @@
         public void KnownPackagesArePrivateAssetsAll()
         {
             new TestRunner("*.csproj", "Package references for known build tools should be marked with PrivateAssets=\"All\"")
+                .ProjectsProducingNuGetPackages()
                 .Run(f =>
                 {
                     var packageRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
@@ -301,7 +286,41 @@
                 });
         }
 
-        static bool PackageDoesNotRequireVersionRanges(string name, out string trustedPrefix)
+        [Test]
+        public async Task ShouldNotReferenceDeprecatedPackages()
+        {
+            await new TestRunner("*.csproj", "Projects should not reference deprecated NuGet packages")
+                .SdkProjects()
+                .RunAsync(async f =>
+                {
+                    var packageNames = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference")
+                        .Select(p => p.Attribute("Include")?.Value)
+                        .Where(name => name != null)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToArray();
+
+                    foreach (var packageName in packageNames)
+                    {
+                        var package = await NuGetData.GetPackageInfo(packageName);
+                        if (package is null)
+                        {
+                            continue; // Internal packages not on NuGet
+                        }
+
+                        // Implementation returns this synchronously, no need for additional caching
+                        var deprecationData = await package.GetDeprecationMetadataAsync();
+                        if (deprecationData is not null)
+                        {
+                            var reasons = string.Join(", ", deprecationData.Reasons);
+                            f.Fail($"Package '{packageName}' has been deprecated for reasons ({reasons}) and is no longer maintained.");
+                        }
+                    }
+                });
+        }
+
+
+
+        static bool PackageShouldNotGenerateVersionRange(string name, out string trustedPrefix)
         {
             foreach (var prefix in packagePrefixesNotRequiringVersionRanges)
             {
