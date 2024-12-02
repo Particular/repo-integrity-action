@@ -1,10 +1,12 @@
 ﻿namespace RepoIntegrityTests
 {
     using System.Linq;
+    using System.Text.RegularExpressions;
     using NUnit.Framework;
+    using NUnit.Framework.Constraints;
     using RepoIntegrityTests.Infrastructure;
 
-    public class WorkflowTests
+    public partial class WorkflowTests
     {
         [Test]
         public void ShouldDefineDefaultShell()
@@ -42,5 +44,54 @@
                     }
                 });
         }
+
+        [Test]
+        public void CheckForSecrets()
+        {
+            new TestRunner("ci.yml", "Early check for secrets when CI workflow uses secrets")
+                .Run(f =>
+                {
+                    if (!f.RelativePath.StartsWith(".github/workflows"))
+                    {
+                        return;
+                    }
+
+                    var contents = File.ReadAllText(f.FullPath);
+                    var secretMatches = SecretsRegex().Matches(contents);
+                    if (!secretMatches.Any())
+                    {
+                        // No secrets and also no Check for Secrets, all good
+                        return;
+                    }
+
+                    var secretNames = secretMatches.OfType<Match>()
+                        .Select(m => m.Groups["Name"].Value)
+                        .Distinct()
+                        .ToArray();
+
+                    if (secretNames.Length == 1 && secretNames[0] == "SECRETS_AVAILABLE")
+                    {
+                        f.Fail("ci.yml does not need a check for secrets using ${{ secrets.SECRETS_AVAILABLE }} if it doesn't use any other secrets. ");
+                        return;
+                    }
+
+                    var workflow = new ActionsWorkflow(f.FullPath);
+
+                    foreach (var job in workflow.Jobs)
+                    {
+                        var firstStep = job.Steps.FirstOrDefault();
+                        if (firstStep is not null)
+                        {
+                            if (firstStep.Run is null || firstStep.Run.Contains("secrets.SECRETS_AVAILABLE"))
+                            {
+                                f.Fail($"Job '{job.Id}' is part of a workflow that uses secrets but does not check for presence of secrets as a first step. See https://github.com/Particular/Platform/blob/main/guidelines/github-actions/annotated-workflows.md#secrets");
+                            }
+                        }
+                    }
+                });
+        }
+
+        [GeneratedRegex(@"\$\{\{\s+secrets\.(?<Name>\w+)", RegexOptions.Compiled)]
+        private partial Regex SecretsRegex();
     }
 }
