@@ -12,7 +12,7 @@
         public static bool IsTestProject(this FileContext file) =>
             file.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference[@Include='Microsoft.NET.Test.Sdk']").Any();
 
-        public static bool ProducesNuGetPackage(this FileContext file)
+        public static bool ProducesLibraryNuGetPackage(this FileContext file)
         {
             var doc = file.XDocument;
 
@@ -25,6 +25,8 @@
             var hasParticularPackaging = doc.XPathSelectElement("/Project/ItemGroup/PackageReference[@Include='Particular.Packaging']") is not null;
             var projectIsPackable = doc.XPathSelectElement("/Project/PropertyGroup/IsPackable").GetBoolean();
 
+            // This isn't taking into consideration whether Particular.Packaging is in the Custom.Build.props, which it is
+            // in ServiceControl, but then only the platform sample project is enabled.
             var isPackable = projectIsPackable ?? GlobalFiles.CustomBuildProps.IsPackable ?? hasParticularPackaging;
             return isPackable;
         }

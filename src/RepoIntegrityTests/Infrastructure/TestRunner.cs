@@ -60,9 +60,15 @@
             return this;
         }
 
-        public TestRunner ProjectsProducingNuGetPackages()
+        public TestRunner ProjectsProducingLibraryNuGetPackages()
         {
-            files = files.Where(f => f.ProducesNuGetPackage());
+            files = files.Where(f => f.ProducesLibraryNuGetPackage());
+            return this;
+        }
+
+        public TestRunner FilesWhere(Func<FileContext, bool> predicate)
+        {
+            files = files.Where(predicate);
             return this;
         }
 

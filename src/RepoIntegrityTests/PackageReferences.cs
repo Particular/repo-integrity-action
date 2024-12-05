@@ -65,7 +65,7 @@
                 .Run(f =>
                 {
                     // Except for things like Core test source packages like TransportTests, they need to control dependency ranges
-                    if (f.ProducesNuGetPackage())
+                    if (f.ProducesLibraryNuGetPackage())
                     {
                         return;
                     }
@@ -95,7 +95,7 @@
             var isRtmRelease = !string.IsNullOrEmpty(githubRef) && NonPrereleaseGithubRefRegex().IsMatch(githubRef);
 
             new TestRunner("*.csproj", "Non-prerelease packages cannot have prerelease dependencies")
-                .ProjectsProducingNuGetPackages()
+                .ProjectsProducingLibraryNuGetPackages()
                 .Run(f =>
                 {
                     var packageReferenceElements = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
@@ -142,7 +142,7 @@
             List<(string projectFileName, string rangedDependency)> publicDeps = [];
 
             new TestRunner("*.csproj", "Find public dependencies")
-                .ProjectsProducingNuGetPackages()
+                .ProjectsProducingLibraryNuGetPackages()
                 .Run(f =>
                 {
                     var packageReferenceElements = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
@@ -168,7 +168,7 @@
                 .TestProjects()
                 .Run(f =>
                 {
-                    if (f.ProducesNuGetPackage())
+                    if (f.ProducesLibraryNuGetPackage())
                     {
                         return;
                     }
@@ -199,7 +199,7 @@
         public void KnownPackagesArePrivateAssetsAll()
         {
             new TestRunner("*.csproj", "Package references for known build tools should be marked with PrivateAssets=\"All\"")
-                .ProjectsProducingNuGetPackages()
+                .ProjectsProducingLibraryNuGetPackages()
                 .Run(f =>
                 {
                     var packageRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
@@ -318,7 +318,74 @@
                 });
         }
 
+        [Test]
+        public void ComponentShouldTargetDotNetLtsVersion()
+        {
+            new TestRunner("*.csproj", "Component projects should target only LTS versions of .NET")
+                .SdkProjects()
+                .ProjectsProducingLibraryNuGetPackages()
+                .Run(f =>
+                {
+                    var tfm = f.XDocument.XPathSelectElement("/Project/PropertyGroup/TargetFramework")?.Value
+                        ?? f.XDocument.XPathSelectElement("/Project/PropertyGroup/TargetFrameworks")?.Value;
 
+                    var nonNet4OrStdTfms = tfm.Split(';').Where(val => !val.StartsWith("net4") && !val.StartsWith("netstandard")).ToArray();
+                    if (nonNet4OrStdTfms.Length > 1)
+                    {
+                        f.Fail("A component should not target more than one version of .NET");
+                        return;
+                    }
+
+                    var singleTfm = nonNet4OrStdTfms.Single();
+                    if (!decimal.TryParse(singleTfm[3..], out var version))
+                    {
+                        f.Fail(".NET version could not be determined");
+                    }
+
+                    var major = (int)version;
+                    Console.WriteLine($"{f.RelativePath} uses .NET {major}");
+
+                    if (major >= 6 && major % 2 != 0)
+                    {
+                        f.Fail("Components should target LTS versions of .NET");
+                    }
+
+                    var packageRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference")
+                        .Select(p => new { Name = p.Attribute("Include")?.Value, Version = p.Attribute("Version")?.Value })
+                        .Where(p => p.Name is not null && p.Version is not null)
+                        .Where(p => IsMicrosoftFrameworkPackage(p.Name))
+                        .ToArray();
+
+                    foreach (var pkg in packageRefs)
+                    {
+                        Console.WriteLine($" - Dependency {pkg.Name} uses version {pkg.Version}");
+                        if (!NuGetVersion.TryParse(pkg.Version, out var pkgVersion))
+                        {
+                            f.Fail($"Version of package '{pkg.Name}' cannot be determined");
+                        }
+
+                        if (pkgVersion.Major != major)
+                        {
+                            f.Fail($"Package '{pkg.Name}' should use the same major version as .NET version {major} targeted by the package.");
+                        }
+                    }
+                });
+        }
+
+        static bool IsMicrosoftFrameworkPackage(string packageName)
+        {
+            if (packageName.StartsWith("System.", StringComparison.OrdinalIgnoreCase))
+            {
+                return packageName is not "System.CommandLine";
+            }
+
+            if (packageName.StartsWith("Microsoft.Extensions.", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         static bool PackageShouldNotGenerateVersionRange(string name, out string trustedPrefix)
         {

@@ -46,7 +46,7 @@
 
                         if (projectIsSigned)
                         {
-                            if (visibleToProject.ProducesNuGetPackage())
+                            if (visibleToProject.ProducesLibraryNuGetPackage())
                             {
                                 keyExpression = $"Key=\"$(NServiceBusKey)\" ";
                             }
@@ -76,7 +76,7 @@
                         return;
                     }
 
-                    if (f.ProducesNuGetPackage())
+                    if (f.ProducesLibraryNuGetPackage())
                     {
                         var isSourcePackage = f.XDocument.XPathSelectElement("/Project/PropertyGroup/IncludeSourceFilesInPackage").GetBoolean() ?? false;
 
