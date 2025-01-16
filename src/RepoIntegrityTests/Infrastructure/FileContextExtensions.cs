@@ -30,5 +30,18 @@
             var isPackable = projectIsPackable ?? GlobalFiles.CustomBuildProps.IsPackable ?? hasParticularPackaging;
             return isPackable;
         }
+
+        public static bool ProducesSourcePackage(this FileContext file)
+        {
+            var doc = file.XDocument;
+
+            var includeBuildOutputElement = doc.XPathSelectElement("/Project/PropertyGroup/IncludeBuildOutput");
+            var includeSourceFilesInPackageElement = doc.XPathSelectElement("/Project/PropertyGroup/IncludeSourceFilesInPackage");
+
+            return includeBuildOutputElement is not null
+                   && includeSourceFilesInPackageElement is not null
+                   && bool.TryParse(includeSourceFilesInPackageElement.Value, out var includeSourceFilesInPackage) && includeSourceFilesInPackage
+                   && bool.TryParse(includeBuildOutputElement.Value, out var includeBuildOutput) && !includeBuildOutput;
+        }
     }
 }

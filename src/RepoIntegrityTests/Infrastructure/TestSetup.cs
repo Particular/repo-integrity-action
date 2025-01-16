@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 [assembly: Parallelizable(ParallelScope.All)]
 [assembly: FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
@@ -21,7 +19,7 @@ namespace RepoIntegrityTests
 
 #if DEBUG
             // For local testing, set to the path of a specific repo, or your whole projects directory, whatever works
-            RootDirectory = @"P:\NServiceBus";
+            RootDirectory = @"/Users/david/Projects/NServiceBus";
 #else
             RootDirectory = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE")
                 ?? Environment.CurrentDirectory;

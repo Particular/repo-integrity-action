@@ -324,6 +324,7 @@
             new TestRunner("*.csproj", "Component projects should target only LTS versions of .NET")
                 .SdkProjects()
                 .ProjectsProducingLibraryNuGetPackages()
+                .ProjectsProducingSourcePackagesIs(false)
                 .Run(f =>
                 {
                     var tfm = f.XDocument.XPathSelectElement("/Project/PropertyGroup/TargetFramework")?.Value

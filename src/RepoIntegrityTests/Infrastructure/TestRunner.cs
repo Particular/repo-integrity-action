@@ -66,6 +66,12 @@
             return this;
         }
 
+        public TestRunner ProjectsProducingSourcePackagesIs(bool producesSourcePackage)
+        {
+            files = files.Where(f => f.ProducesSourcePackage() == producesSourcePackage);
+            return this;
+        }
+
         public TestRunner FilesWhere(Func<FileContext, bool> predicate)
         {
             files = files.Where(predicate);
