@@ -36,7 +36,8 @@
                 Assert.That(ciNetVersions[0], Is.EquivalentTo(ciNetVersions[i]), "All the .NET versions requested by jobs in ci.yml should be the same");
             }
 
-            var expectedFrameworks = ciNetVersions[0].Select(DotNetVersionToTargetFramework).ToArray();
+            // Empty if nothing in workflow file, could mean all tests are net4xx
+            var expectedFrameworks = ciNetVersions.FirstOrDefault()?.Select(DotNetVersionToTargetFramework).ToArray() ?? [];
 
             var collectedTestFrameworks = new List<(string path, string frameworks)>();
 
@@ -54,7 +55,15 @@
 
                     collectedTestFrameworks.Add((file.FullPath, string.Join(';', frameworks)));
 
-                    if (!frameworks.All(tfm => tfm.StartsWith("net4") || expectedFrameworks.Contains(tfm)))
+                    if (expectedFrameworks is null && frameworks.All(tfm => tfm.StartsWith("net4")))
+                    {
+                        // net4xx TFM doesn't need a dotnet-setup
+                        return;
+                    }
+
+                    var nonNetfxFrameworks = frameworks.Where(tfm => !tfm.StartsWith("net4")).ToArray();
+
+                    if (!nonNetfxFrameworks.All(tfm => expectedFrameworks.Contains(tfm)))
                     {
                         file.Fail("Target frameworks don't match the dotnet-versions in the ci.yml workflow");
                     }
