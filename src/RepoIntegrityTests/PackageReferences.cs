@@ -119,9 +119,9 @@
                             continue;
                         }
 
-                        if (PackageShouldNotGenerateVersionRange(name, out var trustedPrefix) && !disableAutoVersionRange)
+                        if (IsMicrosoftFrameworkPackage(name) && !disableAutoVersionRange)
                         {
-                            f.Fail($"Dependency '{name}' should include AutomaticVersionRange=\"false\" because the prefix '{trustedPrefix}' is trusted to not introduce breaking changes.");
+                            f.Fail($"Dependency '{name}' should include AutomaticVersionRange=\"false\" because Microsoft framework packages are trusted to not introduce breaking changes.");
                         }
 
                         // Eventually, when these tests are run in release workflows, remove `|| true` to only break when attempting a release
@@ -375,38 +375,20 @@
 
         static bool IsMicrosoftFrameworkPackage(string packageName)
         {
-            if (packageName.StartsWith("System.", StringComparison.OrdinalIgnoreCase))
+            if (notFrameworkPackages.Contains(packageName))
             {
-                return packageName is not "System.CommandLine";
+                return false;
             }
 
-            if (packageName.StartsWith("Microsoft.Extensions.", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            return false;
+            return packageName.StartsWith("System.", StringComparison.OrdinalIgnoreCase)
+                   || packageName.StartsWith("Microsoft.Extensions.", StringComparison.OrdinalIgnoreCase);
         }
 
-        static bool PackageShouldNotGenerateVersionRange(string name, out string trustedPrefix)
+        static readonly HashSet<string> notFrameworkPackages = new(StringComparer.OrdinalIgnoreCase)
         {
-            foreach (var prefix in packagePrefixesNotRequiringVersionRanges)
-            {
-                if (name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    trustedPrefix = prefix;
-                    return true;
-                }
-            }
-
-            trustedPrefix = null;
-            return false;
-        }
-
-        static readonly string[] packagePrefixesNotRequiringVersionRanges = [
-            "System.",
-            "Microsoft.Extensions."
-        ];
+            "System.CommandLine",
+            "System.Linq.Async"
+        };
 
         // Other possibilities: Content, None, EmbeddedResource, Compile, InternalsVisibleTo, Artifact, RemoveSourceFileFromPackage, Folder
         static readonly HashSet<string> ReferenceElementNames = ["ProjectReference", "PackageReference", "Reference", "FrameworkReference"];
