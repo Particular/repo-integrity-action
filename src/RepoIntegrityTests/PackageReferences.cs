@@ -387,7 +387,8 @@
         static readonly HashSet<string> notFrameworkPackages = new(StringComparer.OrdinalIgnoreCase)
         {
             "System.CommandLine",
-            "System.Linq.Async"
+            "System.Linq.Async",
+            "System.Net.Http"
         };
 
         // Other possibilities: Content, None, EmbeddedResource, Compile, InternalsVisibleTo, Artifact, RemoveSourceFileFromPackage, Folder
