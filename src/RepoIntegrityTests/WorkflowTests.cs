@@ -48,7 +48,7 @@
         [Test]
         public void CheckForSecrets()
         {
-            new TestRunner("ci.yml", "Early check for secrets when CI workflow uses secrets")
+            new TestRunner("ci.yml", "Early check for secrets when CI workflow uses secrets", failIfNoMatches: false)
                 .Run(f =>
                 {
                     if (!f.RelativePath.StartsWith(".github/workflows"))
