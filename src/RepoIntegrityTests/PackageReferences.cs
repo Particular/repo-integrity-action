@@ -330,7 +330,17 @@
                     var tfm = f.XDocument.XPathSelectElement("/Project/PropertyGroup/TargetFramework")?.Value
                         ?? f.XDocument.XPathSelectElement("/Project/PropertyGroup/TargetFrameworks")?.Value;
 
-                    var nonNet4OrStdTfms = tfm.Split(';').Where(val => !val.StartsWith("net4") && !val.StartsWith("netstandard")).ToArray();
+                    var nonNet4OrStdTfms = tfm.Split(';')
+                        .Where(val => !val.StartsWith("net4") && !val.StartsWith("netstandard"))
+                        .Select(val => val.Split('-')[0]) // Chop off suffixes like `-windows`
+                        .ToArray();
+
+                    if (!nonNet4OrStdTfms.Any())
+                    {
+                        // It's an MSMQ package targeting only net4x or something like an analyzer targeting netstandard
+                        return;
+                    }
+
                     if (nonNet4OrStdTfms.Length > 1)
                     {
                         f.Fail("A component should not target more than one version of .NET");
