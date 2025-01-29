@@ -99,10 +99,24 @@
                         {
                             // What to do about inputs inputs, like in https://github.com/Particular/ServiceControl/blob/master/.github/workflows/push-container-images.yml
                         }
-                        else
+                        else if (pair.Value is JsonObject asObj)
                         {
-                            trigger.Filters = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string[]>>(pair.Value);
+                            Dictionary<string, string[]> filters = [];
+                            foreach (var filterPair in asObj)
+                            {
+                                if (filterPair.Value is JsonArray valueArray)
+                                {
+                                    var stringValues = JsonSerializer.Deserialize<string[]>(valueArray);
+                                    filters.Add(filterPair.Key, stringValues);
+                                }
+                                else if (filterPair.Value is JsonValue jsonValue)
+                                {
+                                    filters.Add(filterPair.Key, [jsonValue.GetValue<string>()]);
+                                }
+                            }
+                            trigger.Filters = filters;
                         }
+
                     }
                     return trigger;
                 })
