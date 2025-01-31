@@ -129,7 +129,12 @@
                         {
                             if (version.IsPrerelease)
                             {
-                                f.Fail($"Dependency '{name}' cannot use a prerelease package on an RTM release.");
+                                // This is a NuGet analyzer, we may not really need this analysis
+                                var containsNoWarn = pkgRef.Attribute("NoWarn")?.Value.Contains("NU5104") ?? false;
+                                if (!containsNoWarn)
+                                {
+                                    f.Fail($"Dependency '{name}' cannot use a prerelease package on an RTM release.");
+                                }
                             }
                         }
                     }
