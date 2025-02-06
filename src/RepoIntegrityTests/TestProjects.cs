@@ -53,7 +53,9 @@
                         .Select(tfm => tfm.Contains('-') ? tfm.Split('-')[0] : tfm)
                         .ToArray();
 
-                    collectedTestFrameworks.Add((file.FullPath, string.Join(';', frameworks)));
+                    var nonNetFxFrameworks = frameworks.Where(f => !f.StartsWith("net4")).ToArray();
+
+                    collectedTestFrameworks.Add((file.FullPath, string.Join(';', nonNetFxFrameworks)));
 
                     if (expectedFrameworks is null && frameworks.All(tfm => tfm.StartsWith("net4")))
                     {
@@ -69,7 +71,8 @@
                     }
                 });
 
-            var groups = collectedTestFrameworks.GroupBy(x => x.frameworks)
+            var groups = collectedTestFrameworks
+                .GroupBy(x => x.frameworks)
                 .OrderBy(g => g.Count())
                 .ToArray();
 
