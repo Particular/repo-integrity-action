@@ -74,7 +74,7 @@
 
                     foreach (var pkgRef in packageReferenceElements)
                     {
-                        var name = pkgRef.Attribute("Include").Value;
+                        var name = pkgRef.Attribute("Include")?.Value;
                         var versionStr = pkgRef.Attribute("Version")?.Value;
                         if (versionStr is not null)
                         {
@@ -250,6 +250,26 @@
         ], StringComparer.OrdinalIgnoreCase);
 
         [Test]
+        public void PackageReferenceUpdate()
+        {
+            var testName = "Why does PackageReference not use Include attribute? We don't have a known valid reason for this so currently we want it to fail so we can evaluate.";
+            new TestRunner("*.csproj", testName)
+                .Run(f =>
+                {
+                    var packageRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
+
+                    foreach (var pkgRef in packageRefs)
+                    {
+                        if (pkgRef.Attribute("Include") is null)
+                        {
+                            f.Fail($"No Include attribute on `{pkgRef}` in {f.FileName}. Why?");
+                        }
+                    }
+                });
+
+        }
+
+        [Test]
         public void DontUseMockingFrameworks()
         {
             new TestRunner("*.csproj", "Projects should not reference mocking frameworks")
@@ -259,9 +279,9 @@
 
                     foreach (var pkgRef in packageRefs)
                     {
-                        var packageName = pkgRef.Attribute("Include").Value;
+                        var packageName = pkgRef.Attribute("Include")?.Value;
 
-                        if (KnownMockingFrameworks.Contains(packageName))
+                        if (packageName is not null && KnownMockingFrameworks.Contains(packageName))
                         {
                             f.Fail($"Replace usage of {packageName} with a simple hand-rolled fake");
                         }
