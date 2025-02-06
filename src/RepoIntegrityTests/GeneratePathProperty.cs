@@ -16,7 +16,8 @@ public class GeneratePathProperty
             .Run(f =>
             {
                 var pkgVariables = f.XDocument
-                    .XPathSelectElements("/Project/ItemGroup/PackageReference[@GeneratePathProperty='true']")
+                    .XPathSelectElements("/Project/ItemGroup/PackageReference")
+                    .Where(pkgRef => string.Equals(pkgRef.Attribute("GeneratePathProperty")?.Value, "true", StringComparison.OrdinalIgnoreCase))
                     .Select(el => el.Attribute("Include").Value)
                     .Select(name => $"$(Pkg{name.Replace(".", "_")})")
                     .ToArray();
