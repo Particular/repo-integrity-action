@@ -23,23 +23,36 @@
 
                     var workflowDefaultShell = workflow.Defaults.TryGetValue("run", out var run) && run.TryGetValue("shell", out var shell) ? shell : null;
 
-                    if (workflowDefaultShell is "pwsh" or "bash")
+                    if (workflowDefaultShell is not null and not "pwsh" and not "bash")
                     {
-                        return;
+                        f.Fail("Workflow default shell should be 'pwsh' or 'bash'.");
                     }
 
                     foreach (var job in workflow.Jobs)
                     {
                         var jobDefaultShell = job.Defaults.TryGetValue("run", out var jobRun) && jobRun.TryGetValue("shell", out var jobShell) ? jobShell : null;
 
-                        if (jobDefaultShell is "pwsh" or "bash")
+                        if (jobDefaultShell is not null and not "pwsh" and not "bash" && workflowDefaultShell is null)
                         {
-                            continue;
+                            f.Fail($"Job '{job.Id}' default shell should be 'pwsh' or 'bash' or defined at the workflow level.");
                         }
 
                         if (job.Steps.Any(step => step.Run is not null))
                         {
-                            f.Fail($"Job '{job.Id}' does not have a default shell defined at the workflow or job level.");
+                            var currentDefaultShell = jobDefaultShell ?? workflowDefaultShell;
+                            if (currentDefaultShell is null)
+                            {
+                                f.Fail($"Job {job.Id} does not have a default shell defined at the workflow or job level.");
+                                continue;
+                            }
+
+                            foreach (var step in job.Steps.Where(s => s.Run is not null))
+                            {
+                                if (step.Shell is not null && step.Shell == currentDefaultShell)
+                                {
+                                    f.Fail($"Job {job.Id} step '{step.Name}' does not need to specify a shell that is the same as the defined default shell '{currentDefaultShell}'.");
+                                }
+                            }
                         }
                     }
                 });
