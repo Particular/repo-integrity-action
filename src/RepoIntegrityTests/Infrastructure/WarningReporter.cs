@@ -1,7 +1,6 @@
 namespace RepoIntegrityTests.Infrastructure;
 
 using NUnit.Framework;
-using NUnit.Framework.Internal;
 
 public static class WarningReporter
 {
@@ -11,6 +10,7 @@ public static class WarningReporter
 
     public static void Initialize()
     {
+        Console.WriteLine("Initializing WarningReporter");
         writer?.Dispose();
         writer = null;
         var ci = Environment.GetEnvironmentVariable("CI");
@@ -20,13 +20,16 @@ public static class WarningReporter
 
     public static void SaveReport()
     {
+        Console.WriteLine("Finishing up...");
         if (writer is not null)
         {
+            Console.WriteLine("Flushing writer");
             writer.Flush();
             writer.Dispose();
             writer = null;
 
             var outputPath = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
+            Console.WriteLine($"Saving output to {outputPath}");
             if (outputPath is not null)
             {
                 File.WriteAllText(outputPath, "has-warnings=true");
@@ -47,21 +50,23 @@ public static class WarningReporter
 
     static void WriteLine(string message)
     {
-        TestContext.Out.WriteLine("Got warning: " + message);
-        Console.WriteLine("Direct to console: " + message);
         if (!isWriting)
         {
             return;
         }
 
+        Console.WriteLine("Unlocking");
         lock (padlock)
         {
+            Console.WriteLine("Writer check");
             if (writer is null)
             {
                 var path = Path.Combine(Environment.CurrentDirectory, "code-analysis-warnings.md");
+                Console.WriteLine($"Creating writer: {path}");
                 writer = new StreamWriter(path);
             }
 
+            Console.WriteLine("Writing");
             writer.WriteLine(message);
         }
     }
