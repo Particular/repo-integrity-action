@@ -5,6 +5,8 @@
 
 namespace RepoIntegrityTests
 {
+    using Infrastructure;
+
     [SetUpFixture]
     public class TestSetup
     {
@@ -16,6 +18,7 @@ namespace RepoIntegrityTests
         {
             var currentDirectory = TestContext.CurrentContext.TestDirectory;
             ActionRootPath = Path.GetFullPath(Path.Combine(currentDirectory, "..", "..", "..", "..", ".."));
+            WarningReporter.Initialize();
 
 #if DEBUG
             // For local testing, set to the path of a specific repo, or your whole projects directory, whatever works
@@ -25,6 +28,12 @@ namespace RepoIntegrityTests
                 ?? Environment.CurrentDirectory;
 #endif
             Console.WriteLine($"RootDirectory = {RootDirectory}");
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            WarningReporter.SaveReport();
         }
     }
 }

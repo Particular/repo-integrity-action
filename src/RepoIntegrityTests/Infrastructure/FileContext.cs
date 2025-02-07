@@ -13,8 +13,10 @@
         public string FileName { get; } = Path.GetFileName(filePath);
         public string RelativePath { get; } = filePath.Substring(TestSetup.RootDirectory.Length + 1).Replace("\\", "/");
         public bool IsFailed { get; private set; }
+        public bool HasWarnings { get; private set; }
 
         public List<string> FailReasons { get; } = [];
+        public List<string> WarningReasons { get; } = [];
 
         public void Fail(string reason = null)
         {
@@ -22,6 +24,15 @@
             if (reason is not null)
             {
                 FailReasons.Add(reason);
+            }
+        }
+
+        public void Warn(string reason = null)
+        {
+            HasWarnings = true;
+            if (reason is not null)
+            {
+                WarningReasons.Add(reason);
             }
         }
 

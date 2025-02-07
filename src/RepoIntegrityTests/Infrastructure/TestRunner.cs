@@ -7,12 +7,14 @@
     using System.Linq;
     using System.Runtime.InteropServices;
     using System.Text.RegularExpressions;
+    using Infrastructure;
     using NUnit.Framework;
 
     public class TestRunner
     {
         readonly string name;
         IEnumerable<FileContext> files;
+        static readonly string warningPrefix = Environment.GetEnvironmentVariable("CI") == "true" ? "::warning::" : "Warning: ";
 
         public TestRunner(string glob, string name, bool failIfNoMatches = true)
         {
@@ -92,6 +94,24 @@
 
         void ProcessResults()
         {
+            var warnings = files.Where(f => f.HasWarnings)
+                .SelectMany(f =>
+                {
+                    if (!f.WarningReasons.Any())
+                    {
+                        return [f.RelativePath];
+                    }
+
+                    return f.WarningReasons.Select(reason => $"{f.RelativePath} - {reason}");
+                })
+                .ToArray();
+
+            if (warnings.Any())
+            {
+                TestContext.Out.WriteLine($"{warningPrefix}{name}:\r\n  > {string.Join("\r\n  > ", warnings)}");
+                WarningReporter.Add(name, warnings);
+            }
+
             var results = files.Where(f => f.IsFailed)
                 .SelectMany(f =>
                 {
