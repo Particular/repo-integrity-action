@@ -113,11 +113,25 @@
                             f.Fail(@"Projects creating NuGet packages should be signed with '<AssemblyOriginatorKeyFile>..\NServiceBus.snk</AssemblyOriginatorKeyFile>' and not use the $(SolutionDir) variable.");
                         }
                     }
-                    else if (f.IsTestProject() && keyFile is not null)
+                    else if (f.IsTestProject())
                     {
-                        if (keyFile is not @"..\NServiceBusTests.snk")
+                        if (keyFile is not null and not @"..\NServiceBusTests.snk")
                         {
                             f.Fail(@"Test projects that need to be signed for InternalsVisibleTo should be signed with '<AssemblyOriginatorKeyFile>..\NServiceBusTests.snk</AssemblyOriginatorKeyFile>' and not use the $(SolutionDir) variable.");
+                        }
+                        else
+                        {
+                            var projectName = Path.GetFileNameWithoutExtension(f.FullPath);
+                            bool needsSigning = projects.Any(proj =>
+                            {
+                                return proj.Value.XDocument.XPathSelectElements("/Project/ItemGroup/InternalsVisibleTo")
+                                    .Any(ivt => string.Equals(ivt.Attribute("Include")?.Value, projectName, StringComparison.OrdinalIgnoreCase));
+                            });
+
+                            if (!needsSigning)
+                            {
+                                f.Fail($"Test project {projectName} is not used in an InternalsVisibleTo element in any other project and therefore should not be signed.");
+                            }
                         }
                     }
                 });
