@@ -55,18 +55,15 @@ public static class WarningReporter
             return;
         }
 
-        Console.WriteLine("Unlocking");
         lock (padlock)
         {
-            Console.WriteLine("Writer check");
             if (writer is null)
             {
-                var path = Path.Combine(Environment.CurrentDirectory, "code-analysis-warnings.md");
+                var path = Path.Combine(TestSetup.RootDirectory, "code-analysis-warnings.md");
                 Console.WriteLine($"Creating writer: {path}");
                 writer = new StreamWriter(path);
             }
 
-            Console.WriteLine("Writing");
             writer.WriteLine(message);
         }
     }

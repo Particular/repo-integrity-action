@@ -393,7 +393,6 @@
 
                     foreach (var pkg in packageRefs)
                     {
-                        Console.WriteLine($" - Dependency {pkg.Name} uses version {pkg.Version}");
                         if (!NuGetVersion.TryParse(pkg.Version, out var pkgVersion))
                         {
                             f.Fail($"Version of package '{pkg.Name}' cannot be determined");
