@@ -7,5 +7,5 @@ runs:
       shell: pwsh
       run: |
         cd ${{ github.action_path }}
-        dotnet test src/RepoIntegrityTests --configuration Release --logger "GitHubActions;report-warnings=false" -- RunConfiguration.TreatNoTestsAsError=true
+        dotnet test src/RepoIntegrityTests --configuration Release --logger "GitHubActions;report-warnings=false" --logger "console" -- RunConfiguration.TreatNoTestsAsError=true
 
