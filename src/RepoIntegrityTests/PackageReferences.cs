@@ -423,7 +423,8 @@
         {
             "System.CommandLine",
             "System.Linq.Async",
-            "System.Net.Http"
+            "System.Net.Http",
+            "System.Data.SqlClient"
         };
 
         // Other possibilities: Content, None, EmbeddedResource, Compile, InternalsVisibleTo, Artifact, RemoveSourceFileFromPackage, Folder
