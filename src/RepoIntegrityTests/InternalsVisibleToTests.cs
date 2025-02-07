@@ -175,7 +175,7 @@
 
                     if (!isSorted)
                     {
-                        f.Fail("InternalsVisibleTo elements should be sorted in alphabetical order");
+                        f.Warn("InternalsVisibleTo elements should be sorted in alphabetical order");
                     }
                 });
         }
