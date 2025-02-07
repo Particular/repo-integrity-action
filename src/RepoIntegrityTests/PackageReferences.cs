@@ -435,6 +435,26 @@
                 });
         }
 
+        [Test]
+        public void NoWildcards()
+        {
+            var action = new Action<FileContext>(f =>
+            {
+                var wildcards = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference")
+                    .Select(el => new { Package = el.Attribute("Include")?.Value, Version = el.Attribute("Version")?.Value })
+                    .Where(p => p.Version is not null && p.Version.Contains("*"))
+                    .ToArray();
+
+                foreach (var wildcard in wildcards)
+                {
+                    f.Fail($"Package {wildcard.Package} {wildcard.Version} should not include wildcard.");
+                }
+            });
+
+            new TestRunner("*.csproj", "NuGet package versions should not include wildcards.").Run(action);
+            new TestRunner("Directory.Packages.props", "NuGet package versions should not include wildcards.", failIfNoMatches: false).Run(action);
+        }
+
         static bool IsMicrosoftFrameworkPackage(string packageName)
         {
             if (notFrameworkPackages.Contains(packageName))
