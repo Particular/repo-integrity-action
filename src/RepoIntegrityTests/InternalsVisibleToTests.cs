@@ -23,46 +23,63 @@
         [Test]
         public void ShouldBeInProjectFile()
         {
-            new TestRunner("InternalsVisibleTo.cs", "InternalsVisibleTo should be registered in project files", failIfNoMatches: false)
-                .Run(f =>
+            string[] filenames =
+            [
+                "InternalsVisibleTo.cs",
+                "AssemblyInfo.cs"
+            ];
+
+            foreach (var filename in filenames)
+            {
+                new TestRunner(filename, "InternalsVisibleTo should be registered in project files", failIfNoMatches: false)
+                    .Run(CheckFileForInternalsVisibleToAttribute);
+            }
+        }
+
+        void CheckFileForInternalsVisibleToAttribute(FileContext f)
+        {
+            var project = FindProjectForCodeFile(f.FullPath);
+            var projectIsSigned = project.XDocument.XPathSelectElement("/Project/PropertyGroup/SignAssembly").GetBoolean() ?? false;
+
+            var matches = InternalsVisibleToRegex().Matches(File.ReadAllText(f.FullPath));
+
+            foreach (Match match in matches)
+            {
+                var visibleTo = match.Groups[1].Value;
+
+                if (visibleTo.Contains(','))
                 {
-                    var project = FindProjectForCodeFile(f.FullPath);
-                    var projectIsSigned = project.XDocument.XPathSelectElement("/Project/PropertyGroup/SignAssembly").GetBoolean() ?? false;
+                    visibleTo = visibleTo.Split(',')[0];
+                }
 
-                    var matches = InternalsVisibleToRegex().Matches(File.ReadAllText(f.FullPath));
+                var visibleToProject = projects.Values.FirstOrDefault(p => Path.GetFileNameWithoutExtension(p.FullPath) == visibleTo);
 
-                    foreach (Match match in matches)
+                if (visibleToProject is null)
+                {
+                    f.Fail($"Declares InternalsVisibleTo project '{visibleTo}' that does not exist in the solution.");
+                    continue;
+                }
+
+                string keyExpression = null;
+
+                if (projectIsSigned)
+                {
+                    if (visibleToProject.ProducesLibraryNuGetPackage())
                     {
-                        var visibleTo = match.Groups[1].Value;
-
-                        if (visibleTo.Contains(','))
-                        {
-                            visibleTo = visibleTo.Split(',')[0];
-                        }
-
-                        var visibleToProject = projects.Values.FirstOrDefault(p => Path.GetFileNameWithoutExtension(p.FullPath) == visibleTo);
-
-                        string keyExpression = null;
-
-                        if (projectIsSigned)
-                        {
-                            if (visibleToProject.ProducesLibraryNuGetPackage())
-                            {
-                                keyExpression = $"Key=\"$(NServiceBusKey)\" ";
-                            }
-                            else if (visibleToProject.IsTestProject())
-                            {
-                                keyExpression = $"Key=\"$(NServiceBusTestsKey)\" ";
-                            }
-                            else
-                            {
-                                throw new System.Exception("Project is signed but visible to project is not a package or a test project? What is going on?");
-                            }
-                        }
-
-                        f.Fail($"Express in project file in an ItemGroup using '<InternalsVisibleTo Include=\"{visibleTo}\" {keyExpression}/>'");
+                        keyExpression = $"Key=\"$(NServiceBusKey)\" ";
                     }
-                });
+                    else if (visibleToProject.IsTestProject())
+                    {
+                        keyExpression = $"Key=\"$(NServiceBusTestsKey)\" ";
+                    }
+                    else
+                    {
+                        throw new System.Exception("Project is signed but visible to project is not a package or a test project? What is going on?");
+                    }
+                }
+
+                f.Fail($"Express in project file in an ItemGroup using '<InternalsVisibleTo Include=\"{visibleTo}\" {keyExpression}/>'");
+            }
         }
 
         [Test]
