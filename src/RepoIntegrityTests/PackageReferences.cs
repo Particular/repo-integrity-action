@@ -6,7 +6,6 @@
     using System.Linq;
     using System.Text.RegularExpressions;
     using System.Xml.XPath;
-    using NuGet.Protocol;
     using NuGet.Versioning;
     using NUnit.Framework;
     using RepoIntegrityTests.Infrastructure;
@@ -404,6 +403,34 @@
                         {
                             f.Fail($"Package '{pkg.Name}' should use the same major version as .NET version {major} targeted by the package.");
                         }
+                    }
+                });
+        }
+
+        [Test]
+        public void SortPackageReferences()
+        {
+            new TestRunner("*.csproj", "InternalsVisibleTo elements should be sorted in alphabetical order")
+                .Run(f =>
+                {
+                    var itemGroups = f.XDocument.XPathSelectElements("/Project/ItemGroup");
+                    var isSorted = true;
+
+                    foreach (var itemGroup in itemGroups)
+                    {
+                        var packageRefs = itemGroup.Descendants("PackageReference")
+                            .Select(pkgRef => pkgRef.Attribute("Include")?.Value)
+                            .Where(name => name is not null)
+                            .ToArray();
+
+                        var sorted = packageRefs.OrderBy(packageRef => packageRef).ToArray();
+
+                        isSorted = isSorted && Enumerable.Range(0, packageRefs.Length).All(i => packageRefs[i] == sorted[i]);
+                    }
+
+                    if (!isSorted)
+                    {
+                        f.Fail("PackageReference elements should be in alphabetical order within their parent ItemGroup.");
                     }
                 });
         }

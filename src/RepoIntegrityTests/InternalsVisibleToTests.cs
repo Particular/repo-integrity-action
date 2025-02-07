@@ -5,6 +5,7 @@
     using System.Linq;
     using System.Text.RegularExpressions;
     using System.Xml.XPath;
+    using Microsoft.VisualBasic;
     using NUnit.Framework;
     using RepoIntegrityTests.Infrastructure;
 
@@ -83,7 +84,9 @@
         }
 
         [Test]
-        public void ProjectsShouldBeSignedWithCorrectKey() => new TestRunner("*.csproj", "Projects should be signed with the correct key")
+        public void ProjectsShouldBeSignedWithCorrectKey()
+        {
+            new TestRunner("*.csproj", "Projects should be signed with the correct key")
                 .Run(f =>
                 {
                     var keyFile = f.XDocument.XPathSelectElement("/Project/PropertyGroup/AssemblyOriginatorKeyFile")?.Value;
@@ -135,6 +138,28 @@
                         }
                     }
                 });
+        }
+
+        [Test]
+        public void SortInternalsVisibleToItems()
+        {
+            new TestRunner("*.csproj", "InternalsVisibleTo elements should be sorted in alphabetical order")
+                .Run(f =>
+                {
+                    var names = f.XDocument.XPathSelectElements("/Project/ItemGroup/InternalsVisibleTo")
+                        .Select(ivt => ivt.Attribute("Include").Value)
+                        .ToArray();
+
+                    var sorted = names.OrderBy(name => name).ToArray();
+
+                    var isSorted = Enumerable.Range(0, names.Length).All(i => names[i] == sorted[i]);
+
+                    if (!isSorted)
+                    {
+                        f.Fail("InternalsVisibleTo elements should be sorted in alphabetical order");
+                    }
+                });
+        }
 
         [GeneratedRegex(@"\[assembly: ?InternalsVisibleTo\(""([^""]+)""\)\]", RegexOptions.Compiled)]
         private static partial Regex InternalsVisibleToRegex();
