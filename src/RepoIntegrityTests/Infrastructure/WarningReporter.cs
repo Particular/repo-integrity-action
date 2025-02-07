@@ -46,6 +46,7 @@ public static class WarningReporter
 
     static void WriteLine(string message)
     {
+        TestContext.Out.WriteLine("Got warning: " + message);
         if (!isWriting)
         {
             return;
