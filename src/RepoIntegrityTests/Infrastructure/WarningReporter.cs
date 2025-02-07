@@ -1,6 +1,7 @@
 namespace RepoIntegrityTests.Infrastructure;
 
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 
 public static class WarningReporter
 {
@@ -47,6 +48,7 @@ public static class WarningReporter
     static void WriteLine(string message)
     {
         TestContext.Out.WriteLine("Got warning: " + message);
+        Console.WriteLine("Direct to console: " + message);
         if (!isWriting)
         {
             return;
