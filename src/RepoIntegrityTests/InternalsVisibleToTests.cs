@@ -108,16 +108,16 @@
                             //    f.Fail("Source packages should not be signed. Remove the AssemblyOriginatorKeyFile element.");
                             //}
                         }
-                        else if (keyFile is not "$(SolutionDir)NServiceBus.snk" and not @"..\NServiceBus.snk")
+                        else if (keyFile is not @"..\NServiceBus.snk")
                         {
-                            f.Fail("Projects creating NuGet packages should be signed with '<AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBus.snk</AssemblyOriginatorKeyFile>'");
+                            f.Fail(@"Projects creating NuGet packages should be signed with '<AssemblyOriginatorKeyFile>..\NServiceBus.snk</AssemblyOriginatorKeyFile>' and not use the $(SolutionDir) variable.");
                         }
                     }
                     else if (f.IsTestProject() && keyFile is not null)
                     {
-                        if (keyFile is not "$(SolutionDir)NServiceBusTests.snk" and not @"..\NServiceBusTests.snk")
+                        if (keyFile is not @"..\NServiceBusTests.snk")
                         {
-                            f.Fail("Test projects that need to be signed for InternalsVisibleTo should be signed with '<AssemblyOriginatorKeyFile>$(SolutionDir)NServiceBusTests.snk</AssemblyOriginatorKeyFile>'");
+                            f.Fail(@"Test projects that need to be signed for InternalsVisibleTo should be signed with '<AssemblyOriginatorKeyFile>..\NServiceBusTests.snk</AssemblyOriginatorKeyFile>' and not use the $(SolutionDir) variable.");
                         }
                     }
                 });
@@ -137,7 +137,7 @@
                     return project;
                 }
 
-                dirInfo = file.Directory;
+                dirInfo = dirInfo.Parent;
             }
 
             return null;
