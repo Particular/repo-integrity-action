@@ -141,6 +141,25 @@
         }
 
         [Test]
+        public void NoInternalsVisibleToForNonexistantProjects()
+        {
+            var projectNames = projects.Keys.Select(path => Path.GetFileNameWithoutExtension(path)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            new TestRunner("*.csproj", "No InternalsVisibleTo elements for projects that don't exist in the solution")
+                .Run(f =>
+                {
+                    foreach (var element in f.XDocument.XPathSelectElements("/Project/ItemGroup/InternalsVisibleTo"))
+                    {
+                        var name = element.Attribute("Include").Value;
+                        if (!projectNames.Contains(name))
+                        {
+                            f.Fail($"InternalsVisibleTo element for '{name}' does not match any project in the solution.");
+                        }
+                    }
+                });
+        }
+
+        [Test]
         public void SortInternalsVisibleToItems()
         {
             new TestRunner("*.csproj", "InternalsVisibleTo elements should be sorted in alphabetical order")
