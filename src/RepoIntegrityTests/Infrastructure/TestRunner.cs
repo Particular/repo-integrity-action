@@ -108,7 +108,6 @@
 
             if (warnings.Any())
             {
-                TestContext.Out.WriteLine($"{warningPrefix}{name}:\r\n  > {string.Join("\r\n  > ", warnings)}");
                 WarningReporter.Add(name, warnings);
             }
 

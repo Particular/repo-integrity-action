@@ -10,7 +10,6 @@ public static class WarningReporter
 
     public static void Initialize()
     {
-        Console.WriteLine("Initializing WarningReporter");
         writer?.Dispose();
         writer = null;
         var ci = Environment.GetEnvironmentVariable("CI");
@@ -20,10 +19,8 @@ public static class WarningReporter
 
     public static void SaveReport()
     {
-        Console.WriteLine("Finishing up...");
         if (writer is not null)
         {
-            Console.WriteLine("Flushing writer");
             writer.Flush();
             writer.Dispose();
             writer = null;
@@ -55,7 +52,6 @@ public static class WarningReporter
             if (writer is null)
             {
                 var path = Path.Combine(TestSetup.RootDirectory, "code-analysis-warnings.md");
-                Console.WriteLine($"Creating writer: {path}");
                 writer = new StreamWriter(path);
             }
 
