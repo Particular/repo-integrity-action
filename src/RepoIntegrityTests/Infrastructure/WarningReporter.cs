@@ -34,14 +34,16 @@ public static class WarningReporter
     {
         var testClass = TestContext.CurrentContext.Test.ClassName;
         var testMethodName = TestContext.CurrentContext.Test.MethodName;
+        WriteLine();
         WriteLine($"**🟡 {testClass} : {testMethodName}**: {testName}");
+        WriteLine();
         foreach (var warning in warnings)
         {
             WriteLine($"* {warning}");
         }
     }
 
-    static void WriteLine(string message)
+    static void WriteLine(string message = null)
     {
         if (!isWriting)
         {
