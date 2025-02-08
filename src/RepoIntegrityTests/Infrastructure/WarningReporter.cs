@@ -27,13 +27,6 @@ public static class WarningReporter
             writer.Flush();
             writer.Dispose();
             writer = null;
-
-            var outputPath = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
-            Console.WriteLine($"Saving output to {outputPath}");
-            if (outputPath is not null)
-            {
-                File.WriteAllText(outputPath, "has-warnings=true");
-            }
         }
     }
 
