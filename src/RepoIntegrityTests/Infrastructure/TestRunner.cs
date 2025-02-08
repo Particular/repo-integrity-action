@@ -14,7 +14,6 @@
     {
         readonly string name;
         IEnumerable<FileContext> files;
-        static readonly string warningPrefix = Environment.GetEnvironmentVariable("CI") == "true" ? "::warning::" : "Warning: ";
 
         public TestRunner(string glob, string name, bool failIfNoMatches = true)
         {
