@@ -5,6 +5,7 @@
     using System.IO;
     using System.Linq;
     using System.Xml.Linq;
+    using NUnit.Framework;
 
     public class FileContext(string filePath)
     {
@@ -18,8 +19,13 @@
         public List<string> FailReasons { get; } = [];
         public List<string> WarningReasons { get; } = [];
 
-        public void Fail(string reason = null)
+        public void Fail(string reason = null, string code = null)
         {
+            if (TestSetup.ShouldExclude(TestContext.CurrentContext.Test.MethodName, code, RelativePath))
+            {
+                return;
+            }
+
             IsFailed = true;
             if (reason is not null)
             {
@@ -27,8 +33,13 @@
             }
         }
 
-        public void Warn(string reason = null)
+        public void Warn(string reason = null, string code = null)
         {
+            if (TestSetup.ShouldExclude(TestContext.CurrentContext.Test.MethodName, code, RelativePath))
+            {
+                return;
+            }
+
             HasWarnings = true;
             if (reason is not null)
             {

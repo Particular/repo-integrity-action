@@ -367,7 +367,7 @@
 
                     if (nonNet4OrStdTfms.Length > 1)
                     {
-                        f.Fail("A component should not target more than one version of .NET");
+                        f.Fail("A component should not target more than one version of .NET", "MoreThanOneNetVersion");
                         return;
                     }
 
