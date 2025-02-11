@@ -470,7 +470,10 @@
             "System.CommandLine",
             "System.Linq.Async",
             "System.Net.Http",
-            "System.Data.SqlClient"
+            "System.Data.SqlClient",
+            "System.IdentityModel.Tokens.Jwt",
+            // Actually is a "framework" assembly, but using anything above 4.x in modern code would be meaningless
+            "System.Drawing.Common"
         };
 
         // Other possibilities: Content, None, EmbeddedResource, Compile, InternalsVisibleTo, Artifact, RemoveSourceFileFromPackage, Folder
