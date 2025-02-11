@@ -409,7 +409,7 @@
         [Test]
         public void SortPackageReferences()
         {
-            new TestRunner("*.csproj", "InternalsVisibleTo elements should be sorted in alphabetical order")
+            new TestRunner("*.csproj", "PackageReference elements should be sorted in alphabetical order")
                 .Run(f =>
                 {
                     var itemGroups = f.XDocument.XPathSelectElements("/Project/ItemGroup");
