@@ -126,6 +126,13 @@
             {
                 Assert.Fail($"{name}:\r\n  > {string.Join("\r\n  > ", results)}");
             };
+
+#if DEBUG
+            if (warnings.Any())
+            {
+                Assert.Fail($"DEBUG WARNINGS > {name}:\r\n  > {string.Join("\r\n  > ", warnings)}");
+            }
+#endif
         }
     }
 }

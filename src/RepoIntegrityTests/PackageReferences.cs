@@ -400,7 +400,7 @@
 
                         if (pkgVersion.Major != major)
                         {
-                            f.Fail($"Package '{pkg.Name}' should use the same major version as .NET version {major} targeted by the package.");
+                            f.Fail($"Package '{pkg.Name}' should use the same major version as .NET version {major} targeted by the package.", "FrameworkPackages");
                         }
                     }
                 });

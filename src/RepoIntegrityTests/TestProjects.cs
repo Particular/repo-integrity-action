@@ -72,6 +72,7 @@
                 });
 
             var groups = collectedTestFrameworks
+                .Where(x => !string.IsNullOrEmpty(x.frameworks))
                 .GroupBy(x => x.frameworks)
                 .OrderBy(g => g.Count())
                 .ToArray();

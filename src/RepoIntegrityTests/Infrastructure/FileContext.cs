@@ -29,6 +29,10 @@
             IsFailed = true;
             if (reason is not null)
             {
+                if (code is not null)
+                {
+                    reason = $"(Code: {code}) {reason}";
+                }
                 FailReasons.Add(reason);
             }
         }
@@ -43,6 +47,10 @@
             HasWarnings = true;
             if (reason is not null)
             {
+                if (code is not null)
+                {
+                    reason = $"(Code: {code}) {reason}";
+                }
                 WarningReasons.Add(reason);
             }
         }
