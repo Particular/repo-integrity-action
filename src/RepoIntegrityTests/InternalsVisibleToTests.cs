@@ -165,13 +165,20 @@
             new TestRunner("*.csproj", "InternalsVisibleTo elements should be sorted in alphabetical order")
                 .Run(f =>
                 {
-                    var names = f.XDocument.XPathSelectElements("/Project/ItemGroup/InternalsVisibleTo")
-                        .Select(ivt => ivt.Attribute("Include").Value)
-                        .ToArray();
+                    var itemGroups = f.XDocument.XPathSelectElements("/Project/ItemGroup");
+                    var isSorted = true;
 
-                    var sorted = names.OrderBy(name => name).ToArray();
+                    foreach (var itemGroup in itemGroups)
+                    {
+                        var packageRefs = itemGroup.Descendants("InternalsVisibleTo")
+                            .Select(pkgRef => pkgRef.Attribute("Include")?.Value)
+                            .Where(name => name is not null)
+                            .ToArray();
 
-                    var isSorted = Enumerable.Range(0, names.Length).All(i => names[i] == sorted[i]);
+                        var sorted = packageRefs.OrderBy(packageRef => packageRef).ToArray();
+
+                        isSorted = isSorted && Enumerable.Range(0, packageRefs.Length).All(i => packageRefs[i] == sorted[i]);
+                    }
 
                     if (!isSorted)
                     {
