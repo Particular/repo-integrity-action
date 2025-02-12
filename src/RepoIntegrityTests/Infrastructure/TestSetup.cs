@@ -13,6 +13,7 @@ namespace RepoIntegrityTests
     {
         public static string RootDirectory { get; private set; }
         public static string ActionRootPath { get; private set; }
+        public static bool IsPrivateRepo { get; private set; }
 
         static Dictionary<string, IgnoreRule[]> ignoreRules = new(StringComparer.OrdinalIgnoreCase);
 
@@ -44,6 +45,8 @@ namespace RepoIntegrityTests
                 ignoreRules = config.Ignore.GroupBy(r => r.Test, StringComparer.OrdinalIgnoreCase)
                     .ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.OrdinalIgnoreCase);
             }
+
+            IsPrivateRepo = Environment.GetEnvironmentVariable("PRIVATE_REPO")?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
         }
 
         public static bool ShouldExclude(string testMethodName, string code, string relativePath)

@@ -48,6 +48,11 @@
         [Test]
         public void CheckForSecrets()
         {
+            if (TestSetup.IsPrivateRepo)
+            {
+                return;
+            }
+
             new TestRunner("ci.yml", "Early check for secrets when CI workflow uses secrets", failIfNoMatches: false)
                 .Run(f =>
                 {
