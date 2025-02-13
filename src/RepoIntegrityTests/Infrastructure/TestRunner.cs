@@ -125,7 +125,7 @@
             if (results.Any())
             {
                 Assert.Fail($"{name}:\r\n  > {string.Join("\r\n  > ", results)}");
-            };
+            }
 
 #if DEBUG
             if (warnings.Any())

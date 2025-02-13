@@ -3,7 +3,6 @@
     using System.Linq;
     using System.Text.RegularExpressions;
     using NUnit.Framework;
-    using NUnit.Framework.Constraints;
     using RepoIntegrityTests.Infrastructure;
 
     public partial class WorkflowTests

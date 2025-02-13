@@ -1,11 +1,12 @@
 namespace RepoIntegrityTests.Infrastructure;
 
+using System.Collections.Concurrent;
 using NuGet.Configuration;
 using NuGet.Protocol.Core.Types;
 
 public static class NuGetData
 {
-    static readonly Dictionary<string, IPackageSearchMetadata> packageInfo = [];
+    static readonly ConcurrentDictionary<string, IPackageSearchMetadata> packageInfo = [];
     static readonly PackageMetadataResource packageMetadata;
     static readonly SourceCacheContext cache = new();
 
@@ -20,8 +21,8 @@ public static class NuGetData
         if (!packageInfo.TryGetValue(packageId, out var info))
         {
             var allVersions = await packageMetadata.GetMetadataAsync(packageId, false, false, cache, NuGet.Common.NullLogger.Instance, CancellationToken.None);
-            var latest = allVersions.OrderByDescending(p => p.Identity.Version).FirstOrDefault();
-            packageInfo[packageId] = info = latest;
+            info = allVersions.OrderByDescending(p => p.Identity.Version).FirstOrDefault();
+            packageInfo.TryAdd(packageId, info);
         }
 
         return info;
