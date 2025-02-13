@@ -182,7 +182,7 @@
 
                     if (!isSorted)
                     {
-                        f.Warn("InternalsVisibleTo elements should be sorted in alphabetical order within their parent ItemGroup");
+                        f.Fail("InternalsVisibleTo elements should be sorted in alphabetical order within their parent ItemGroup");
                     }
                 });
         }

@@ -429,7 +429,7 @@
 
                     if (!isSorted)
                     {
-                        f.Warn("PackageReference elements should be in alphabetical order within their parent ItemGroup.");
+                        f.Fail("PackageReference elements should be in alphabetical order within their parent ItemGroup.");
                     }
                 });
         }
