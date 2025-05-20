@@ -124,7 +124,7 @@
                         }
 
                         // Eventually, when these tests are run in release workflows, remove `|| true` to only break when attempting a release
-                        if (isRtmRelease || true)
+                        if (isRtmRelease)
                         {
                             if (version.IsPrerelease)
                             {

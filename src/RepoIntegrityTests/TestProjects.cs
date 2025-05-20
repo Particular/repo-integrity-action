@@ -24,22 +24,47 @@
 
             var workflow = new ActionsWorkflow(ciPath);
 
-            var ciNetVersions = workflow.Jobs
+            var explicitNetVersionsRequested = workflow.Jobs
                 .SelectMany(j => j.Steps.Where(s => s.Uses?.StartsWith("actions/setup-dotnet@") ?? false))
-                .Select(step => step.With["dotnet-version"])
+                .Select(step =>
+                {
+                    var dotnetVersionsAtt = step.With.GetValueOrDefault("dotnet-version");
+
+                    var useGlobalJsonAt = step.With.GetValueOrDefault("global-json-file");
+                    if (useGlobalJsonAt is not null)
+                    {
+                        var globalJsonPath = Path.Combine(TestSetup.RootDirectory, useGlobalJsonAt);
+                        if (File.Exists(globalJsonPath))
+                        {
+                            // Simplistic parsing
+                            var globalJson = File.ReadAllText(globalJsonPath);
+                            var versionMatch = Regex.Match(globalJson, @"""version"": ""(\d+\.\d+)\.\d+""", RegexOptions.IgnoreCase);
+                            if (versionMatch.Success)
+                            {
+                                var majorMinor = versionMatch.Groups[1].Value;
+                                return $"{majorMinor}.x" + Environment.NewLine + dotnetVersionsAtt;
+                            }
+                        }
+                    }
+
+                    return dotnetVersionsAtt;
+                })
+                .Where(versions => versions is not null)
                 .Select(versions => Regex.Split(versions, @"(\r?\n)+").Where(s => !string.IsNullOrWhiteSpace(s)).ToArray())
                 .ToArray();
 
             // If workflow has more than one job, make sure someone didn't update one setup-dotnet and forget the other one
-            for (var i = 1; i < ciNetVersions.Length; i++)
+            for (var i = 1; i < explicitNetVersionsRequested.Length; i++)
             {
-                Assert.That(ciNetVersions[0], Is.EquivalentTo(ciNetVersions[i]), "All the .NET versions requested by jobs in ci.yml should be the same");
+                Assert.That(explicitNetVersionsRequested[0], Is.EquivalentTo(explicitNetVersionsRequested[i]), "All the .NET versions requested by jobs in ci.yml should be the same");
             }
 
             // Empty if nothing in workflow file, could mean all tests are net4xx
-            var expectedFrameworks = ciNetVersions.FirstOrDefault()?.Select(DotNetVersionToTargetFramework).ToArray() ?? [];
+            var expectedFrameworks = explicitNetVersionsRequested.FirstOrDefault()?.Select(DotNetVersionToTargetFramework).ToArray() ?? [];
 
             var collectedTestFrameworks = new List<(string path, string frameworks)>();
+
+            Console.WriteLine("Expected expectedFrameworks: " + string.Join(", ", expectedFrameworks));
 
             new TestRunner("*.csproj", "Find tests")
                 .SdkProjects()
