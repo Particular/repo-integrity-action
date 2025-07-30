@@ -232,11 +232,10 @@
 
         static readonly HashSet<string> KnownBuildToolPackages = new([
             "Particular.Packaging",
+            "Particular.Obsoletes",
             "Particular.CodeRules",
             "Particular.Analyzers",
             "Fody",
-            "Obsolete.Fody",
-            "Janitor.Fody",
             "ILRepack",
             "NServiceBus.Transport.Msmq.Sources"
         ], StringComparer.OrdinalIgnoreCase);
