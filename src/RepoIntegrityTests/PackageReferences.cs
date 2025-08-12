@@ -232,6 +232,7 @@
 
         static readonly HashSet<string> KnownBuildToolPackages = new([
             "Particular.Packaging",
+            "Particular.Obsoletes",
             "Particular.CodeRules",
             "Particular.Analyzers",
             "Fody",
@@ -265,7 +266,6 @@
                         }
                     }
                 });
-
         }
 
         [Test]
@@ -292,6 +292,46 @@
             "Moq",
             "NSubstitute"
         ], StringComparer.OrdinalIgnoreCase);
+
+        [Test]
+        public void DontUseJanitorFody()
+        {
+            new TestRunner("*.csproj", "Projects shouldn't use Janitor.Fody")
+                .Run(f =>
+                {
+                    var packageRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
+
+                    foreach (var pkgRef in packageRefs)
+                    {
+                        var packageName = pkgRef.Attribute("Include")?.Value;
+
+                        if (packageName is not null && packageName.Equals("Janitor.Fody", StringComparison.OrdinalIgnoreCase))
+                        {
+                            f.Fail($"Replace it with manually created Dispose methods");
+                        }
+                    }
+                });
+        }
+
+        [Test]
+        public void DontUseObsoleteFody()
+        {
+            new TestRunner("*.csproj", "Projects shouldn't use Obsolete.Fody")
+                .Run(f =>
+                {
+                    var packageRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
+
+                    foreach (var pkgRef in packageRefs)
+                    {
+                        var packageName = pkgRef.Attribute("Include")?.Value;
+
+                        if (packageName is not null && packageName.Equals("Obsolete.Fody", StringComparison.OrdinalIgnoreCase))
+                        {
+                            f.Fail($"Replace it with Particular.Obsoletes");
+                        }
+                    }
+                });
+        }
 
         [Test]
         public void DontExplicitlyReferenceParticularAnalyzers()
