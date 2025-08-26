@@ -28,7 +28,6 @@
                         file.Fail();
                     }
                 });
-
         }
 
         [Test]
@@ -296,6 +295,12 @@
         [Test]
         public void DontUseJanitorFody()
         {
+            // This condition can be removed once NSB 10 is our oldest supported version
+            if (!TestSetup.IsDefaultBranch)
+            {
+                Assert.Ignore();
+            }
+
             new TestRunner("*.csproj", "Projects shouldn't use Janitor.Fody")
                 .Run(f =>
                 {
@@ -316,6 +321,12 @@
         [Test]
         public void DontUseObsoleteFody()
         {
+            // This condition can be removed once NSB 10 is our oldest supported version
+            if (!TestSetup.IsDefaultBranch)
+            {
+                Assert.Ignore();
+            }
+
             new TestRunner("*.csproj", "Projects shouldn't use Obsolete.Fody")
                 .Run(f =>
                 {
