@@ -14,6 +14,7 @@ namespace RepoIntegrityTests
         public static string RootDirectory { get; private set; }
         public static string ActionRootPath { get; private set; }
         public static bool IsPrivateRepo { get; private set; }
+        public static bool IsDefaultBranch { get; private set; }
 
         static Dictionary<string, IgnoreRule[]> ignoreRules = new(StringComparer.OrdinalIgnoreCase);
 
@@ -47,6 +48,9 @@ namespace RepoIntegrityTests
             }
 
             IsPrivateRepo = Environment.GetEnvironmentVariable("PRIVATE_REPO")?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
+
+            var branchName = Environment.GetEnvironmentVariable("AFFECTED_BRANCH")?.Trim();
+            IsDefaultBranch = branchName is "main" or "master";
         }
 
         public static bool ShouldExclude(string testMethodName, string code, string relativePath)
