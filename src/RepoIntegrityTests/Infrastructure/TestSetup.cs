@@ -27,7 +27,7 @@ namespace RepoIntegrityTests
 
 #if DEBUG
             // For local testing, set to the path of a specific repo, or your whole projects directory, whatever works
-            RootDirectory = @"/Users/david/Projects/NServiceBus.AwsLambda.Sqs";
+            RootDirectory = @"/Users/david/Projects/NServiceBus";
 #else
             RootDirectory = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE")
                 ?? Environment.CurrentDirectory;

@@ -76,14 +76,20 @@
                         var versionStr = pkgRef.Attribute("Version")?.Value;
                         if (versionStr is not null)
                         {
-                            if (!NuGetVersion.TryParse(versionStr, out var version))
+                            if (!NuGetVersion.TryParse(versionStr, out var _))
                             {
-                                f.Fail($"PackageReference '{name}' is using version '{versionStr}' which should be an explicit version");
+                                if (!MsBuildVariableRegex().IsMatch(versionStr))
+                                {
+                                    f.Fail($"PackageReference '{name}' is using version '{versionStr}' which should be an explicit version");
+                                }
                             }
                         }
                     }
                 });
         }
+
+        [GeneratedRegex(@"\$\(\w+\)", RegexOptions.Compiled)]
+        private static partial Regex MsBuildVariableRegex();
 
         [Test]
         public void NoPrereleasePackagesOnRelease()

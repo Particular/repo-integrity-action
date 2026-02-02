@@ -13,10 +13,18 @@
         {
             var srcDirectory = Path.Combine(TestSetup.RootDirectory, "src");
 
-            if (!Directory.Exists(srcDirectory) || !Directory.GetFiles(srcDirectory, "*.sln").Any())
+            if (Directory.Exists(srcDirectory))
             {
-                Assert.Ignore("Not a .NET project");
+                var isDotNet = Directory.GetFiles(srcDirectory, "*.slnx").Any()
+                               || Directory.GetFiles(srcDirectory, "*.sln").Any();
+
+                if (isDotNet)
+                {
+                    return;
+                }
             }
+
+            Assert.Ignore("Not a .NET project");
         }
     }
 }
