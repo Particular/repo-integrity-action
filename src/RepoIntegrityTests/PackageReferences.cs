@@ -429,6 +429,13 @@
                     }
 
                     var singleTfm = nonNet4OrStdTfms.Single();
+
+                    if (MsBuildVariableRegex().IsMatch(singleTfm))
+                    {
+                        // TODO: Could try to check Custom.Build.props for these values, but mostly if these are implemented as variables they're probably implemented correctly.
+                        return;
+                    }
+
                     if (!decimal.TryParse(singleTfm[3..], out var version))
                     {
                         f.Fail(".NET version could not be determined");
