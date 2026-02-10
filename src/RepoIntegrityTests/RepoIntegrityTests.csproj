@@ -17,7 +17,7 @@
   </ItemGroup>
   
   <ItemGroup Label="Direct references to prevent vulnerability warnings">
-    <PackageReference Include="System.Formats.Asn1" Version="10.0.2" />  
+    <PackageReference Include="System.Formats.Asn1" Version="10.0.3" />  
   </ItemGroup>
 
 </Project>
