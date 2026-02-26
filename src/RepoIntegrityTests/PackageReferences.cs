@@ -117,7 +117,8 @@
                         }
 
                         var isSingleVersion = NuGetVersion.TryParse(versionStr, out var version);
-                        if (!isSingleVersion)
+                        var isMsBuildVariable = MsBuildVariableRegex().IsMatch(versionStr);
+                        if (!isSingleVersion && !isMsBuildVariable)
                         {
                             f.Fail($"Dependency '{name}' should use a single version number because tooling is now used to generate version ranges at compile time.");
                             continue;
