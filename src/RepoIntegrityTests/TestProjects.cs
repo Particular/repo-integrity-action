@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.XPath;
 using NUnit.Framework;
-using RepoIntegrityTests.Infrastructure;
 
 [DotNetProjects]
 public partial class TestProjects

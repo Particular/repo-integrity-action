@@ -1,7 +1,6 @@
 ﻿namespace RepoIntegrityTests;
 
 using NUnit.Framework;
-using RepoIntegrityTests.Infrastructure;
 
 [DotNetProjects]
 public class CodeFileTests

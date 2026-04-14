@@ -1,4 +1,4 @@
-namespace RepoIntegrityTests.Infrastructure;
+namespace RepoIntegrityTests;
 
 using System.Collections.Concurrent;
 using NuGet.Configuration;

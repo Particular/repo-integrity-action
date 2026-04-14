@@ -3,7 +3,6 @@
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
-using RepoIntegrityTests.Infrastructure;
 
 public class TestRunner
 {

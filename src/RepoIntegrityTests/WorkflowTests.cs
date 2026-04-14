@@ -2,7 +2,6 @@
 
 using System.Text.RegularExpressions;
 using NUnit.Framework;
-using RepoIntegrityTests.Infrastructure;
 
 public partial class WorkflowTests
 {

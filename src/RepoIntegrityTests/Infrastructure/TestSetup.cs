@@ -6,7 +6,6 @@
 namespace RepoIntegrityTests;
 
 using System.Text.RegularExpressions;
-using RepoIntegrityTests.Infrastructure;
 
 [SetUpFixture]
 public class TestSetup

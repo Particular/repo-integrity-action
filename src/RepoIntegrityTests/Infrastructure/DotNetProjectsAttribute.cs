@@ -1,4 +1,4 @@
-﻿namespace RepoIntegrityTests.Infrastructure;
+﻿namespace RepoIntegrityTests;
 
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;

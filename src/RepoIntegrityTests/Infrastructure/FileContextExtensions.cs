@@ -1,7 +1,6 @@
 ﻿namespace RepoIntegrityTests;
 
 using System.Xml.XPath;
-using RepoIntegrityTests.Infrastructure;
 
 public static class FileContextExtensions
 {

@@ -3,7 +3,6 @@
 using System.Text.RegularExpressions;
 using System.Xml.XPath;
 using NUnit.Framework;
-using RepoIntegrityTests.Infrastructure;
 
 [DotNetProjects, FixtureLifeCycle(LifeCycle.SingleInstance)]
 public partial class InternalsVisibleToTests

@@ -1,6 +1,6 @@
 #nullable enable
 
-namespace RepoIntegrityTests.Infrastructure;
+namespace RepoIntegrityTests;
 
 using System.Text.RegularExpressions;
 
