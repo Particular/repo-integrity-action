@@ -1,8 +1,5 @@
 ﻿namespace RepoIntegrityTests.Infrastructure
 {
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
     using System.Text.Json;
     using System.Text.Json.Nodes;
     using System.Text.Json.Serialization;
@@ -123,7 +120,7 @@
                 .ToArray();
             }
 
-            throw new System.Exception("Unable to parse workflow triggers");
+            throw new Exception("Unable to parse workflow triggers");
         }
     }
 

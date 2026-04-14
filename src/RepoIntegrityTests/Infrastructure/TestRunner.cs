@@ -1,14 +1,9 @@
 ﻿namespace RepoIntegrityTests
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Linq;
     using System.Runtime.InteropServices;
     using System.Text.RegularExpressions;
-    using Infrastructure;
     using NUnit.Framework;
+    using RepoIntegrityTests.Infrastructure;
 
     public class TestRunner
     {

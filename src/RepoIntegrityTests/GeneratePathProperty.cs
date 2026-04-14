@@ -2,8 +2,8 @@ namespace RepoIntegrityTests;
 
 using System.Xml.Linq;
 using System.Xml.XPath;
-using Infrastructure;
 using NUnit.Framework;
+using RepoIntegrityTests.Infrastructure;
 
 [DotNetProjects]
 public class GeneratePathProperty

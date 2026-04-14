@@ -1,11 +1,7 @@
 ﻿namespace RepoIntegrityTests
 {
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
     using System.Text.RegularExpressions;
     using System.Xml.XPath;
-    using Microsoft.VisualBasic;
     using NUnit.Framework;
     using RepoIntegrityTests.Infrastructure;
 
@@ -75,7 +71,7 @@
                     }
                     else
                     {
-                        throw new System.Exception("Project is signed but visible to project is not a package or a test project? What is going on?");
+                        throw new Exception("Project is signed but visible to project is not a package or a test project? What is going on?");
                     }
                 }
 

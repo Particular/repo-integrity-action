@@ -12,7 +12,7 @@ public static class NuGetData
 
     static NuGetData()
     {
-        var nugetRepo = new SourceRepository(new PackageSource("https://api.nuget.org/v3/index.json"), NuGet.Protocol.Core.Types.Repository.Provider.GetCoreV3());
+        var nugetRepo = new SourceRepository(new PackageSource("https://api.nuget.org/v3/index.json"), Repository.Provider.GetCoreV3());
         packageMetadata = nugetRepo.GetResource<PackageMetadataResource>();
     }
 

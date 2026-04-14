@@ -1,9 +1,5 @@
 ﻿namespace RepoIntegrityTests
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
     using System.Text.RegularExpressions;
     using System.Xml.XPath;
     using NuGet.Versioning;
