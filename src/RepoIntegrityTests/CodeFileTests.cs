@@ -1,16 +1,15 @@
-﻿namespace RepoIntegrityTests
-{
-    using NUnit.Framework;
-    using RepoIntegrityTests.Infrastructure;
+﻿namespace RepoIntegrityTests;
 
-    [DotNetProjects]
-    public class CodeFileTests
+using NUnit.Framework;
+using RepoIntegrityTests.Infrastructure;
+
+[DotNetProjects]
+public class CodeFileTests
+{
+    [Test]
+    public void GlobalSuppressionsInEditorConfig()
     {
-        [Test]
-        public void GlobalSuppressionsInEditorConfig()
-        {
-            new TestRunner("GlobalSuppressions.cs", "Global suppressions should be expressed in .editorconfig files so they are easily findable", failIfNoMatches: false)
-                .Run(f => f.Fail());
-        }
+        new TestRunner("GlobalSuppressions.cs", "Global suppressions should be expressed in .editorconfig files so they are easily findable", failIfNoMatches: false)
+            .Run(f => f.Fail());
     }
 }

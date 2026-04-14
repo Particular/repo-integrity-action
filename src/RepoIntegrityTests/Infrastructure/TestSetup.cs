@@ -3,78 +3,77 @@
 [assembly: Parallelizable(ParallelScope.All)]
 [assembly: FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
 
-namespace RepoIntegrityTests
+namespace RepoIntegrityTests;
+
+using System.Text.RegularExpressions;
+using RepoIntegrityTests.Infrastructure;
+
+[SetUpFixture]
+public class TestSetup
 {
-    using System.Text.RegularExpressions;
-    using RepoIntegrityTests.Infrastructure;
+    public static string RootDirectory { get; private set; }
+    public static string ActionRootPath { get; private set; }
+    public static bool IsPrivateRepo { get; private set; }
+    public static bool IsDefaultBranch { get; private set; }
 
-    [SetUpFixture]
-    public class TestSetup
+    static Dictionary<string, IgnoreRule[]> ignoreRules = new(StringComparer.OrdinalIgnoreCase);
+
+    [OneTimeSetUp]
+    public void SetupRootDirectories()
     {
-        public static string RootDirectory { get; private set; }
-        public static string ActionRootPath { get; private set; }
-        public static bool IsPrivateRepo { get; private set; }
-        public static bool IsDefaultBranch { get; private set; }
-
-        static Dictionary<string, IgnoreRule[]> ignoreRules = new(StringComparer.OrdinalIgnoreCase);
-
-        [OneTimeSetUp]
-        public void SetupRootDirectories()
-        {
-            var currentDirectory = TestContext.CurrentContext.TestDirectory;
-            ActionRootPath = Path.GetFullPath(Path.Combine(currentDirectory, "..", "..", "..", "..", ".."));
-            WarningReporter.Initialize();
+        var currentDirectory = TestContext.CurrentContext.TestDirectory;
+        ActionRootPath = Path.GetFullPath(Path.Combine(currentDirectory, "..", "..", "..", "..", ".."));
+        WarningReporter.Initialize();
 
 #if DEBUG
-            // For local testing, set to the path of a specific repo, or your whole projects directory, whatever works
-            RootDirectory = @"/Users/david/Projects/NServiceBus";
+        // For local testing, set to the path of a specific repo, or your whole projects directory, whatever works
+        RootDirectory = @"/Users/david/Projects/NServiceBus";
 #else
-            RootDirectory = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE")
-                ?? Environment.CurrentDirectory;
+        RootDirectory = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE")
+            ?? Environment.CurrentDirectory;
 #endif
-            Console.WriteLine($"RootDirectory = {RootDirectory}");
+        Console.WriteLine($"RootDirectory = {RootDirectory}");
 
-            var configPath = Path.Combine(RootDirectory, ".repointegrity.yml");
-            if (File.Exists(configPath))
-            {
-                var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
-                    .IgnoreUnmatchedProperties()
-                    .WithCaseInsensitivePropertyMatching()
-                    .Build();
+        var configPath = Path.Combine(RootDirectory, ".repointegrity.yml");
+        if (File.Exists(configPath))
+        {
+            var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
+                .IgnoreUnmatchedProperties()
+                .WithCaseInsensitivePropertyMatching()
+                .Build();
 
-                var config = deserializer.Deserialize<RepoIntegrityConfig>(File.ReadAllText(configPath));
-                ignoreRules = config.Ignore.GroupBy(r => r.Test, StringComparer.OrdinalIgnoreCase)
-                    .ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.OrdinalIgnoreCase);
-            }
-
-            IsPrivateRepo = Environment.GetEnvironmentVariable("PRIVATE_REPO")?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
-
-            var branchName = Environment.GetEnvironmentVariable("AFFECTED_BRANCH")?.Trim();
-            IsDefaultBranch = branchName is "main" or "master";
+            var config = deserializer.Deserialize<RepoIntegrityConfig>(File.ReadAllText(configPath));
+            ignoreRules = config.Ignore.GroupBy(r => r.Test, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.OrdinalIgnoreCase);
         }
 
-        public static bool ShouldExclude(string testMethodName, string code, string relativePath)
+        IsPrivateRepo = Environment.GetEnvironmentVariable("PRIVATE_REPO")?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
+
+        var branchName = Environment.GetEnvironmentVariable("AFFECTED_BRANCH")?.Trim();
+        IsDefaultBranch = branchName is "main" or "master";
+    }
+
+    public static bool ShouldExclude(string testMethodName, string code, string relativePath)
+    {
+        if (ignoreRules.TryGetValue(testMethodName, out var ruleList))
         {
-            if (ignoreRules.TryGetValue(testMethodName, out var ruleList))
+            foreach (var rule in ruleList)
             {
-                foreach (var rule in ruleList)
+                if (rule.AppliesTo(code, relativePath))
                 {
-                    if (rule.AppliesTo(code, relativePath))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
-
-            return false;
         }
 
-        [OneTimeTearDown]
-        public void OneTimeTearDown()
-        {
-            WarningReporter.SaveReport();
-        }
-
-        record Exclusion(string TestName, Regex AppliesTo);
+        return false;
     }
+
+    [OneTimeTearDown]
+    public void OneTimeTearDown()
+    {
+        WarningReporter.SaveReport();
+    }
+
+    record Exclusion(string TestName, Regex AppliesTo);
 }

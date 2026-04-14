@@ -1,27 +1,26 @@
-﻿namespace RepoIntegrityTests.Infrastructure
+﻿namespace RepoIntegrityTests.Infrastructure;
+
+using NUnit.Framework;
+using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
+
+public class DotNetProjectsAttribute : Attribute, IApplyToContext
 {
-    using NUnit.Framework;
-    using NUnit.Framework.Interfaces;
-    using NUnit.Framework.Internal;
-
-    public class DotNetProjectsAttribute : Attribute, IApplyToContext
+    public void ApplyToContext(TestExecutionContext context)
     {
-        public void ApplyToContext(TestExecutionContext context)
+        var srcDirectory = Path.Combine(TestSetup.RootDirectory, "src");
+
+        if (Directory.Exists(srcDirectory))
         {
-            var srcDirectory = Path.Combine(TestSetup.RootDirectory, "src");
+            var isDotNet = Directory.GetFiles(srcDirectory, "*.slnx").Any()
+                           || Directory.GetFiles(srcDirectory, "*.sln").Any();
 
-            if (Directory.Exists(srcDirectory))
+            if (isDotNet)
             {
-                var isDotNet = Directory.GetFiles(srcDirectory, "*.slnx").Any()
-                               || Directory.GetFiles(srcDirectory, "*.sln").Any();
-
-                if (isDotNet)
-                {
-                    return;
-                }
+                return;
             }
-
-            Assert.Ignore("Not a .NET project");
         }
+
+        Assert.Ignore("Not a .NET project");
     }
 }
