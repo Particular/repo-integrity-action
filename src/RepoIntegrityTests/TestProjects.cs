@@ -123,7 +123,7 @@ public partial class TestProjects
             _ => null
         };
 
-        if (result != null)
+        if (result is not null)
         {
             return result;
         }

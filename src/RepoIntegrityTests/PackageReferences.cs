@@ -372,7 +372,7 @@ public partial class PackageReferences
             {
                 var packageNames = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference")
                     .Select(p => p.Attribute("Include")?.Value)
-                    .Where(name => name != null)
+                    .Where(name => name is not null)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToArray();
 
