@@ -514,6 +514,16 @@ public partial class PackageReferences
         new TestRunner("Directory.Packages.props", "NuGet package versions should not include wildcards.", failIfNoMatches: false).Run(action);
     }
 
+    [Test]
+    public void DoNotUseCentralPackageManagement()
+    {
+        new TestRunner("Directory.Packages.props", "Repos should not use Central Package Management.", failIfNoMatches: false)
+            .Run(f =>
+            {
+                f.Warn("Central Package Management file found.");
+            });
+    }
+
     static bool IsMicrosoftFrameworkPackage(string packageName)
     {
         if (notFrameworkPackages.Contains(packageName))
