@@ -1,17 +1,16 @@
-﻿namespace RepoIntegrityTests.Infrastructure
+﻿namespace RepoIntegrityTests;
+
+using System.Xml.Linq;
+
+public static class XDocumentExtensions
 {
-    using System.Xml.Linq;
-
-    public static class XDocumentExtensions
+    public static bool? GetBoolean(this XElement element)
     {
-        public static bool? GetBoolean(this XElement element)
+        if (bool.TryParse(element?.Value, out var value))
         {
-            if (bool.TryParse(element?.Value, out var value))
-            {
-                return value;
-            }
-
-            return null;
+            return value;
         }
+
+        return null;
     }
 }

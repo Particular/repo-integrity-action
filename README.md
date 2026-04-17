@@ -30,8 +30,6 @@ But more generally, repos will execute this workflow as part of the [shared work
 
 New rules should be added using the `Warn(…)` method rather than `Fail(…)` so they can be rolled out to all repos before making them required to merge a PR.
 
-When used through 
-
 Tests that create warnings will not fail the test, and the workflow will be green as well, but will append to the GitHub Actions markdown summary, and then that summary will be uploaded as a run artifact. Internal automations will note the presence of the artifact wiht the known name and log the workflow result as a warning rather than success or failure.
 
 Once the warnings have been verified to be addressed in all repos and branches, the method usage can be changed from `Warn(…)` to `Fail(…)` to make the check required for merging PRs.
