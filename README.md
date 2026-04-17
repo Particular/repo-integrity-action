@@ -30,7 +30,7 @@ But more generally, repos will execute this workflow as part of the [shared work
 
 New rules should be added using the `Warn(…)` method rather than `Fail(…)` so they can be rolled out to all repos before making them required to merge a PR.
 
-Tests that create warnings will not fail the test, and the workflow will be green as well, but will append to the GitHub Actions markdown summary, and then that summary will be uploaded as a run artifact. Internal automations will note the presence of the artifact wiht the known name and log the workflow result as a warning rather than success or failure.
+Tests that create warnings will not fail the test, and the workflow will be green as well, but will append to the GitHub Actions markdown summary, and then that summary will be uploaded as a run artifact. Internal automations will note the presence of the artifact with the known name and log the workflow result as a warning rather than success or failure.
 
 Once the warnings have been verified to be addressed in all repos and branches, the method usage can be changed from `Warn(…)` to `Fail(…)` to make the check required for merging PRs.
 
@@ -38,7 +38,7 @@ The uploading of artifacts to make warnings work is handled by the [shared workf
 
 ## Ignores
 
-There are some valid cases for creating an exception to a rule, but this should be a last resort, and never used just to get the test to be quiet. First, consider if the issue is fixable. Second, consider whether the test can be updated to account for an edge case that should be allowed. Only after these avenues are exhuasted should an ignore be added, and in most cases, only on a release branch that will go away after some time.
+There are some valid cases for creating an exception to a rule, but this should be a last resort, and never used just to get the test to be quiet. First, consider if the issue is fixable. Second, consider whether the test can be updated to account for an edge case that should be allowed. Only after these avenues are exhausted should an ignore be added, and in most cases, only on a release branch that will go away after some time.
 
 To create an ignore, create a file `.repointegrity.yml` in the root of the repo [like this one](https://github.com/Particular/ParticularTemplates/blob/master/.repointegrity.yml) containing the following:
 
