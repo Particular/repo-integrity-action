@@ -10,6 +10,9 @@ public static class FileContextExtensions
     public static bool IsTestProject(this FileContext file) =>
         file.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference[@Include='Microsoft.NET.Test.Sdk']").Any();
 
+    public static bool IsAnalyzerTestProject(this FileContext file) =>
+        file.IsTestProject() && file.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference[@Include='Microsoft.CodeAnalysis.CSharp.Workspaces']").Any();
+
     public static bool ProducesLibraryNuGetPackage(this FileContext file)
     {
         var doc = file.XDocument;

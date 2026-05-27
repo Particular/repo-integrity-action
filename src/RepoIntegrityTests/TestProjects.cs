@@ -60,7 +60,7 @@ public partial class TestProjects
 
         new TestRunner("*.csproj", "Find tests")
             .SdkProjects()
-            .TestProjects()
+            .TestProjects(includeAnalyzerTestProjects: false)
             .Run(file =>
             {
                 var frameworksText = file.XDocument.XPathSelectElement("/Project/PropertyGroup/TargetFramework")?.Value
