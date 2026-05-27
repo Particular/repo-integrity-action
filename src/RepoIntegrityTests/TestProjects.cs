@@ -1,6 +1,5 @@
 ﻿namespace RepoIntegrityTests;
 
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.XPath;
 using NUnit.Framework;
@@ -57,8 +56,6 @@ public partial class TestProjects
         // Empty if nothing in workflow file, could mean all tests are net4xx
         var expectedFrameworks = explicitNetVersionsRequested.FirstOrDefault()?.Select(DotNetVersionToTargetFramework).ToArray() ?? [];
 
-        var collectedTestFrameworks = new List<(string path, string frameworks)>();
-
         Console.WriteLine("Expected expectedFrameworks: " + string.Join(", ", expectedFrameworks));
 
         new TestRunner("*.csproj", "Find tests")
@@ -75,43 +72,28 @@ public partial class TestProjects
 
                 var nonNetFxFrameworks = frameworks.Where(f => !f.StartsWith("net4")).ToArray();
 
-                collectedTestFrameworks.Add((file.FullPath, string.Join(';', nonNetFxFrameworks)));
-
                 if (expectedFrameworks is null && frameworks.All(tfm => tfm.StartsWith("net4")))
                 {
                     // net4xx TFM doesn't need a dotnet-setup
                     return;
                 }
 
-                var nonNetfxFrameworks = frameworks.Where(tfm => !tfm.StartsWith("net4")).ToArray();
-
-                if (!nonNetfxFrameworks.All(tfm => expectedFrameworks.Contains(tfm)))
+                foreach (var framework in nonNetFxFrameworks)
                 {
-                    file.Fail("Target frameworks don't match the dotnet-versions in the ci.yml workflow");
+                    if (!expectedFrameworks.Contains(framework))
+                    {
+                        file.Fail($"Target frameworks include a framework that is not in the dotnet-versions in the ci.yml workflow: {framework}");
+                    }
+                }
+
+                foreach (var framework in expectedFrameworks)
+                {
+                    if (!nonNetFxFrameworks.Contains(framework))
+                    {
+                        file.Fail($"Target frameworks are missing a framework that is in the dotnet-versions in the ci.yml workflow: {framework}");
+                    }
                 }
             });
-
-        var groups = collectedTestFrameworks
-            .Where(x => !string.IsNullOrEmpty(x.frameworks))
-            .GroupBy(x => x.frameworks)
-            .OrderBy(g => g.Count())
-            .ToArray();
-
-        if (groups.Length > 1)
-        {
-            var msg = new StringBuilder().AppendLine("The target frameworks of the test projects do not all match:");
-
-            foreach (var g in groups)
-            {
-                msg.AppendLine($"  * Target Frameworks: '{g.Key}':");
-                foreach (var proj in g)
-                {
-                    msg.AppendLine($"    * {proj.path}");
-                }
-            }
-
-            Assert.Fail(msg.ToString());
-        }
     }
 
     string DotNetVersionToTargetFramework(string dotnetVersion)
