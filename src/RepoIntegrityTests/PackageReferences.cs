@@ -520,7 +520,7 @@ public partial class PackageReferences
         new TestRunner("Directory.Packages.props", "Repos should not use Central Package Management.", failIfNoMatches: false)
             .Run(f =>
             {
-                f.Warn("Central Package Management file found.");
+                f.Fail("Central Package Management file found.");
             });
     }
 
