@@ -49,9 +49,15 @@ public class TestRunner
         return this;
     }
 
-    public TestRunner TestProjects()
+    public TestRunner TestProjects(bool includeAnalyzerTestProjects = true)
     {
         files = files.Where(f => f.IsTestProject());
+
+        if (!includeAnalyzerTestProjects)
+        {
+            files = files.Where(f => !f.IsAnalyzerTestProject());
+        }
+
         return this;
     }
 
