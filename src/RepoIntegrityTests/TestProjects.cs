@@ -53,7 +53,7 @@ public partial class TestProjects
             Assert.That(explicitNetVersionsRequested[0], Is.EquivalentTo(explicitNetVersionsRequested[i]), "All the .NET versions requested by jobs in ci.yml should be the same");
         }
 
-        // Empty if nothing in workflow file, could mean all tests are net4xx
+        // Empty if nothing in workflow file, could mean all tests are netfx
         var expectedFrameworks = explicitNetVersionsRequested.FirstOrDefault()?.Select(DotNetVersionToTargetFramework).ToArray() ?? [];
 
         Console.WriteLine("Expected expectedFrameworks: " + string.Join(", ", expectedFrameworks));
@@ -70,13 +70,13 @@ public partial class TestProjects
                     .Select(tfm => tfm.Contains('-') ? tfm.Split('-')[0] : tfm)
                     .ToArray();
 
-                var nonNetFxFrameworks = frameworks.Where(f => !f.StartsWith("net4")).ToArray();
-
-                if (expectedFrameworks is null && frameworks.All(tfm => tfm.StartsWith("net4")))
+                // netfx TFM doesn't need a dotnet-setup
+                if (frameworks.All(tfm => tfm.StartsWith("net4")))
                 {
-                    // net4xx TFM doesn't need a dotnet-setup
                     return;
                 }
+
+                var nonNetFxFrameworks = frameworks.Where(f => !f.StartsWith("net4")).ToArray();
 
                 foreach (var framework in nonNetFxFrameworks)
                 {
