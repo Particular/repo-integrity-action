@@ -32,7 +32,7 @@ public class GeneratePathProperty
                         ItemGroup = el.Parent,
                         RemoveValue = el.Attribute("Remove")?.Value
                     })
-                    .Where(x => x.RemoveValue.Contains("**"))
+                    .Where(x => x.RemoveValue.StartsWith("$(Pkg") && x.RemoveValue.Contains("**"))
                     .ToArray();
 
                 foreach (var remove in removesWithWildcard)
