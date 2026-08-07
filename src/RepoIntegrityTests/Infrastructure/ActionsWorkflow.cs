@@ -37,6 +37,10 @@ public class ActionsWorkflow
         {
             var job = JsonSerializer.Deserialize<WorkflowJob>(pair.Value, options);
             job.Id = pair.Key;
+            // job.Steps deserializes awkwardly where a "parallel" step would be a node with null values,
+            // so we specifically parse out top-level steps and then a comprehensive list of steps
+            job.Steps = ParseTopLevelSteps(pair.Value["steps"], options);
+            job.AllSteps = ParseAllSteps(pair.Value["steps"], options);
 
             if (pair.Value["defaults"] is not null)
             {
@@ -122,6 +126,52 @@ public class ActionsWorkflow
 
         throw new Exception("Unable to parse workflow triggers");
     }
+
+    static JobStep[] ParseTopLevelSteps(JsonNode stepsNode, JsonSerializerOptions options)
+    {
+        if (stepsNode is not JsonArray stepsArray)
+        {
+            return [];
+        }
+
+        return stepsArray
+            .OfType<JsonObject>()
+            .Where(step => step["parallel"] is null)
+            .Select(step => JsonSerializer.Deserialize<JobStep>(step, options))
+            .Where(step => step is { Uses: not null } or { Run: not null })
+            .OfType<JobStep>()
+            .ToArray();
+    }
+
+    static JobStep[] ParseAllSteps(JsonNode stepsNode, JsonSerializerOptions options)
+    {
+        List<JobStep> allSteps = [];
+        CollectAllSteps(stepsNode, options, allSteps);
+        return allSteps.ToArray();
+    }
+
+    static void CollectAllSteps(JsonNode stepsNode, JsonSerializerOptions options, List<JobStep> allSteps)
+    {
+        if (stepsNode is not JsonArray stepsArray)
+        {
+            return;
+        }
+
+        foreach (var stepNode in stepsArray.OfType<JsonObject>())
+        {
+            if (stepNode["parallel"] is JsonNode parallelNode)
+            {
+                CollectAllSteps(parallelNode, options, allSteps);
+                continue;
+            }
+
+            var step = JsonSerializer.Deserialize<JobStep>(stepNode, options);
+            if (step is not null)
+            {
+                allSteps.Add(step);
+            }
+        }
+    }
 }
 
 public class WorkflowTrigger(string eventId)
@@ -142,6 +192,7 @@ public class WorkflowJob
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Defaults { get; set; } = new Dictionary<string, IReadOnlyDictionary<string, string>>();
     public JsonObject Strategy { get; set; }
     public JobStep[] Steps { get; set; } = [];
+    public JobStep[] AllSteps { get; set; } = [];
 }
 
 public class JobStep

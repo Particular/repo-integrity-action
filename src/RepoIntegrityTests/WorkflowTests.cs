@@ -34,7 +34,7 @@ public partial class WorkflowTests
                         continue;
                     }
 
-                    if (job.Steps.Any(step => step.Run is not null))
+                    if (job.AllSteps.Any(step => step.Run is not null))
                     {
                         f.Fail($"Job '{job.Id}' does not have a default shell defined at the workflow or job level.");
                     }
