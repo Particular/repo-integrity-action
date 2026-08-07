@@ -19,7 +19,7 @@ public partial class TestProjects
         var workflow = new ActionsWorkflow(ciPath);
 
         var explicitNetVersionsRequested = workflow.Jobs
-            .SelectMany(j => j.AllSteps.Where(s => s.Uses?.StartsWith("actions/setup-dotnet@") ?? false))
+            .SelectMany(j => j.Steps.Where(s => s.Uses?.StartsWith("actions/setup-dotnet@") ?? false))
             .Select(step =>
             {
                 var dotnetVersionsAtt = step.With.GetValueOrDefault("dotnet-version");
