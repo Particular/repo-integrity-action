@@ -34,7 +34,7 @@ public partial class WorkflowTests
                         continue;
                     }
 
-                    if (job.AllSteps.Any(step => step.Run is not null))
+                    if (job.Steps.Any(step => step.Run is not null))
                     {
                         f.Fail($"Job '{job.Id}' does not have a default shell defined at the workflow or job level.");
                     }
@@ -81,7 +81,7 @@ public partial class WorkflowTests
 
                 foreach (var job in workflow.Jobs)
                 {
-                    var firstStep = job.Steps.FirstOrDefault();
+                    var firstStep = job.Steps.FirstOrDefault(s => s.Uses is not null || s.Run is not null);
                     if (firstStep is not null)
                     {
                         if (firstStep.Run is null || firstStep.Run.Contains("secrets.SECRETS_AVAILABLE"))
