@@ -288,11 +288,39 @@ public partial class PackageReferences
                 }
             });
     }
+
     static readonly HashSet<string> KnownMockingFrameworks = new([
         "FakeItEasy",
         "Moq",
         "NSubstitute"
     ], StringComparer.OrdinalIgnoreCase);
+
+    [Test]
+    public void DontUseAlternateApprovalTestFrameworks()
+    {
+        new TestRunner("*.csproj", "Projects should use Particular.Approvals, not outside approval/verify testing frameworks")
+            .Run(f =>
+            {
+                var packageRefs = f.XDocument.XPathSelectElements("/Project/ItemGroup/PackageReference");
+
+                foreach (var pkgRef in packageRefs)
+                {
+                    var packageName = pkgRef.Attribute("Include")?.Value;
+
+                    if (packageName is not null)
+                    {
+                        var isAlternateFramework = packageName.StartsWith("Verify", StringComparison.OrdinalIgnoreCase)
+                            || packageName.StartsWith("ApprovalUtilities", StringComparison.OrdinalIgnoreCase)
+                            || packageName.StartsWith("ApprovalTests", StringComparison.OrdinalIgnoreCase);
+
+                        if (isAlternateFramework)
+                        {
+                            f.Fail($"Replace usage of {packageName} with Particular.Approvals");
+                        }
+                    }
+                }
+            });
+    }
 
     [Test]
     public void DontUseJanitorFody()
