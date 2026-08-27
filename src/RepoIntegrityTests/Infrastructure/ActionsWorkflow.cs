@@ -37,10 +37,9 @@ public class ActionsWorkflow
         {
             var job = JsonSerializer.Deserialize<WorkflowJob>(pair.Value, options);
             job.Id = pair.Key;
-            // job.Steps deserializes awkwardly where a "parallel" step would be a node with null values,
-            // so we specifically parse out top-level steps and then a comprehensive list of steps
-            job.Steps = ParseTopLevelSteps(pair.Value["steps"], options);
-            job.AllSteps = ParseAllSteps(pair.Value["steps"], options);
+            // Deserialize steps via the DOM so that nested groups of steps are flattened,
+            // instead of a group wrapper deserializing directly into a (mostly-empty) JobStep.
+            job.Steps = ParseAllSteps(pair.Value["steps"], options);
 
             if (pair.Value["defaults"] is not null)
             {
@@ -127,50 +126,41 @@ public class ActionsWorkflow
         throw new Exception("Unable to parse workflow triggers");
     }
 
-    static JobStep[] ParseTopLevelSteps(JsonNode stepsNode, JsonSerializerOptions options)
+    // Yields every step in document order, regardless of how deeply nested.
+    static IEnumerable<JsonObject> EnumerateSteps(JsonNode node)
     {
-        if (stepsNode is not JsonArray stepsArray)
+        if (node is not JsonArray arr)
         {
-            return [];
+            yield break;
         }
 
-        return stepsArray
-            .OfType<JsonObject>()
-            .Where(step => step["parallel"] is null)
-            .Select(step => JsonSerializer.Deserialize<JobStep>(step, options))
-            .Where(step => step is { Uses: not null } or { Run: not null })
-            .OfType<JobStep>()
-            .ToArray();
+        foreach (var element in arr.OfType<JsonObject>())
+        {
+            var wrapsArray = false;
+            foreach (var property in element)
+            {
+                if (property.Value is JsonArray nestedArray)
+                {
+                    wrapsArray = true;
+                    foreach (var step in EnumerateSteps(nestedArray))
+                    {
+                        yield return step;
+                    }
+                }
+            }
+
+            if (!wrapsArray)
+            {
+                yield return element;
+            }
+        }
     }
 
     static JobStep[] ParseAllSteps(JsonNode stepsNode, JsonSerializerOptions options)
     {
-        List<JobStep> allSteps = [];
-        CollectAllSteps(stepsNode, options, allSteps);
-        return allSteps.ToArray();
-    }
-
-    static void CollectAllSteps(JsonNode stepsNode, JsonSerializerOptions options, List<JobStep> allSteps)
-    {
-        if (stepsNode is not JsonArray stepsArray)
-        {
-            return;
-        }
-
-        foreach (var stepNode in stepsArray.OfType<JsonObject>())
-        {
-            if (stepNode["parallel"] is JsonNode parallelNode)
-            {
-                CollectAllSteps(parallelNode, options, allSteps);
-                continue;
-            }
-
-            var step = JsonSerializer.Deserialize<JobStep>(stepNode, options);
-            if (step is not null)
-            {
-                allSteps.Add(step);
-            }
-        }
+        return EnumerateSteps(stepsNode)
+            .Select(step => JsonSerializer.Deserialize<JobStep>(step, options))
+            .ToArray();
     }
 }
 
@@ -191,8 +181,8 @@ public class WorkflowJob
     public string RunsOn { get; set; }
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Defaults { get; set; } = new Dictionary<string, IReadOnlyDictionary<string, string>>();
     public JsonObject Strategy { get; set; }
+    [JsonIgnore] // populated manually
     public JobStep[] Steps { get; set; } = [];
-    public JobStep[] AllSteps { get; set; } = [];
 }
 
 public class JobStep
